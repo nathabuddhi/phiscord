@@ -1,0 +1,75 @@
+@tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  @layer base {
+    :root {
+      --barbackgroundhover: 0 0 70%;
+      --barbackground: 0 0 65%;
+      --serverlistbackground: 0 0 75%;
+      --background: 0 0% 100%;
+      --darkerbackground : 0 0% 90%;
+      --foreground: 222.2 84% 4.9%;
+      --darkerforeground: 222.2 84% 4.9%;
+      --card: 0 0% 90%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 90%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 235 86% 65%;
+      --primary-foreground: 222.2 84% 4.9%;
+      --secondary: 210 40% 96.1%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 222.2 84% 4.9%;
+      --accent: 210 40% 96.1%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 0 0 75%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+  
+    .dark {
+      --barbackgroundhover: 0 0 14%;
+      --barbackground: 0 0 3%;
+      --serverlistbackground: 0 0 6%;
+      --background: 270, 8%, 19%;
+      --darkerbackground : 0 0% 12%;
+      --foreground: 210 40% 98%;
+      --darkerforeground: 216 4% 57%;
+      --card: 0 0% 12%;;
+      --card-foreground: 210 40% 98%;
+      --popover: 0 0% 12%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 235 86% 65%;
+      --primary-foreground: 210 40% 98%; 
+      --secondary: 235, 86%, 65%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 210, 10%, 70%;
+      --accent: 270, 7%, 22%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 45%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 260 6% 20%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9;
+    }
+  }
+
+  @layer base {
+    * {
+      @apply border-border;
+    }
+    body {
+      @apply bg-background text-foreground;
+    }
+  }
+
+  body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  

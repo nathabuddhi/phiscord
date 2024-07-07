@@ -1,0 +1,12 @@
+.messageLink{
+    color: hsl(var(--foreground));
+}
+  
+.messageLink a{
+    color: hsl(var(--primary));
+    text-decoration: none; 
+}
+
+.messageLink a:hover{
+    text-decoration: underline; 
+}
