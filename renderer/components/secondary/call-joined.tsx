@@ -24,12 +24,12 @@ export default function CallJoined({ userId }) {
         return () => unsubscribe();
     }, [userId]);
 
-    if(loading)
+    if(loading || !user)
         return null;
 
     return (
         <>
-            <div className="flex flex-row ml-9 mx-1 items-center">
+            <div className="flex flex-row ml-10 mb-2 items-center">
                 <Avatar asChild>
                     <AvatarFallback className="w-6 h-6 text-xs">{user.avatarname}</AvatarFallback>
                 </Avatar>

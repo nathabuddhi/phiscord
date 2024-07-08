@@ -89,20 +89,43 @@ const HomePage = ({ userDetails }) => {
         }
     };
 
-    const toggleVideo = () => {
-        if (localTracks.videoTrack) {
+    const toggleVideo = async () => {
+        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
+        if (!localTracks.videoTrack) {
+            try {
+                const videoTrack = await AgoraRTC.createCameraVideoTrack();
+                setLocalTracks(prevTracks => ({ ...prevTracks, videoTrack }));
+                await clientRef.current.publish(videoTrack);
+                await videoTrack.play(`local-video-${userDetails.id}`);
+                setIsViewingCall(true);
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "An error occurred while trying to start your video: " + error.message,
+                })
+            }
+            
+        } else {
             if (isVideoOn) {
                 localTracks.videoTrack.stop();
                 localTracks.videoTrack.setEnabled(false);
             } else {
                 localTracks.videoTrack.setEnabled(true);
-                localTracks.videoTrack.play(`local-video-${userDetails.uid}`);
+                localTracks.videoTrack.play(`local-video-${userDetails.id}`);
             }
         }
         setIsVideoOn((prevState) => !prevState);
     };
 
-    const toggleMic = () => {
+    const toggleMic = async() => {
+        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
+        if(!localTracks.audioTrack) {
+            const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
+
+            await clientRef.current.publish(audioTrack);
+        }
         if (localTracks.audioTrack) {
             localTracks.audioTrack.setEnabled(!isMicOn);
         }
@@ -167,31 +190,41 @@ const HomePage = ({ userDetails }) => {
         }
 
         if (typeof window !== "undefined") {
-            const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
-            const agoraClient = AgoraRTC.createClient({
-                mode: "rtc",
-                codec: "vp8"
-            });
-            clientRef.current = agoraClient;
+            try {
+                const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
+                const agoraClient = AgoraRTC.createClient({
+                    mode: "rtc",
+                    codec: "vp8"
+                });
 
-            await agoraClient.join(APP_ID, channel.id, null, null);
+                clientRef.current = agoraClient;
+                await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
 
-            const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-            setLocalTracks({ audioTrack, videoTrack });
+                if(isMicOn) {
+                    const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
+                    await agoraClient.publish(audioTrack);
+                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, avatar: userDetails.avatarname, username: userDetails.username }]);
+                } else {
+                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, avatar: userDetails.avatarname, username: userDetails.username }]);
+                }
+                
 
-            await agoraClient.publish([audioTrack, videoTrack]);
+                agoraClient.on("user-published", handleUserPublished);
+                agoraClient.on("user-unpublished", handleUserUnpublished);
+                agoraClient.on("user-left", handleUserLeft);
 
-            agoraClient.on("user-published", handleUserPublished);
-            agoraClient.on("user-unpublished", handleUserUnpublished);
-            agoraClient.on("user-left", handleUserLeft);
-
-            setUsers((prevUsers) => [...prevUsers, { uid: userDetails.uid, videoTrack, audioTrack }]);
-
-            setIsInCall(true);
-            setIsViewingCall(true);
-            setIsVideoOn(true);
-            console.log(serverCall);
-            addJoinedMember(server.id, channel.id, userDetails.id);
+                setIsInCall(true);
+                setIsViewingCall(false);
+                setIsVideoOn(false);
+                addJoinedMember(server.id, channel.id, userDetails.id);
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "An error occurred while trying to join the call: " + error.message,
+                })
+            }
         }
     };
 
@@ -212,7 +245,7 @@ const HomePage = ({ userDetails }) => {
 
     const handleUserUnpublished = (user, mediaType) => {
         if (mediaType === "video") {
-            setUsers((prevUsers) => prevUsers.filter((u) => u.uid !== user.uid));
+            setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
         }
 
         if (mediaType === "audio") {
@@ -221,24 +254,28 @@ const HomePage = ({ userDetails }) => {
     };
 
     const handleUserLeft = (user) => {
-        setUsers((prevUsers) => prevUsers.filter((u) => u.uid !== user.uid));
+        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
     };
 
     const leaveCall = () => {
         setIsViewingCall(false);
         setIsInCall(false);
         setIsVideoOn(false);
-        setServerCall(null);
-        setChannelCall(null);
         setUserToCall(null);
 
-        if(serverCall && channelCall)
+        if(serverCall && channelCall) {
             removeJoinedMember(serverCall.id, channelCall.id, userDetails.id);
+            setServerCall(null);
+            setChannelCall(null);
+        }
 
-        if (localTracks.audioTrack) localTracks.audioTrack.close();
-        if (localTracks.videoTrack) localTracks.videoTrack.close();
+        if (localTracks.audioTrack)
+            localTracks.audioTrack.close();
+        if (localTracks.videoTrack)
+            localTracks.videoTrack.close();
         const client = clientRef.current;
-        if (client) client.leave();
+        if (client)
+            client.leave();
     };
 
     return (
