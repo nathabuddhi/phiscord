@@ -6,6 +6,6 @@ Phiscord is a Discord inspired social application, offering features such as mes
 
 ### Details
 
-Made using Nextron (Typescript) as the framework and uses other libraries such as Lucide and Shadcn-UI. 
+Made using Nextron (Typescript) as the framework and uses libraries such as Shadcn-UI. 
 
 Type `npm run dev` in the terminal to run.
