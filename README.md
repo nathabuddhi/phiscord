@@ -1,32 +1,11 @@
-<p align="center"><img src="https://i.imgur.com/Tp7AJyT.png"></p>
+## LC118's Technical Test
 
-## Usage
+### What is PHiscord?
 
-### Create an App
+Phiscord is a Discord inspired social application, offering features such as messaging and calling.
 
-```
-# with git
-$ git clone https://github.com/jekigates/nextron-with-shadcn-ui
-```
+### Details
 
-### Install Dependencies
+Made using Nextron (Typescript) as the framework and uses other libraries such as Lucide and Shadcn-UI. 
 
-```
-$ cd nextron-with-shadcn-ui
-
-# using yarn or npm
-$ yarn (or `npm install`)
-
-# using pnpm
-$ pnpm install --shamefully-hoist
-```
-
-### Use it
-
-```
-# development mode
-$ yarn dev (or `npm run dev` or `pnpm run dev`)
-
-# production build
-$ yarn build (or `npm run build` or `pnpm run build`)
-```
+Type `npm run dev` in the terminal to run.
