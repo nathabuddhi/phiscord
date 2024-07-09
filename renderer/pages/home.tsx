@@ -91,23 +91,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const toggleVideo = async () => {
-        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
-        if (!localTracks.videoTrack) {
-            try {
-                const videoTrack = await AgoraRTC.createCameraVideoTrack();
-                setLocalTracks(prevTracks => ({ ...prevTracks, videoTrack }));
-                await clientRef.current.publish(videoTrack);
-                await videoTrack.play(`local-video-${userDetails.id}`);
-                setIsViewingCall(true);
-            } catch (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Uh oh! Something went wrong.",
-                    description: "An error occurred while trying to start your video: " + error.message,
-                })
-            }
-            
-        } else {
+        if (localVideoTrack) {
             if (isVideoOn) {
                 localVideoTrack.stop();
                 localVideoTrack.setEnabled(false);
@@ -120,15 +104,8 @@ const HomePage = ({ userDetails }) => {
     };
 
     const toggleMic = async() => {
-        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
-        if(!localTracks.audioTrack) {
-            const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-            setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
-
-            await clientRef.current.publish(audioTrack);
-        }
-        if (localTracks.audioTrack) {
-            localTracks.audioTrack.setEnabled(!isMicOn);
+        if (localAudioTrack) {
+            localAudioTrack.setEnabled(!isMicOn);
         }
         setIsMicOn((prevState) => !prevState);
     };
@@ -148,7 +125,7 @@ const HomePage = ({ userDetails }) => {
         await updateDoc(channelDocRef, {
             joined: arrayUnion(userId),
         });
-    };
+    }
 
     const removeJoinedMember = async (serverId, channelId, userId) => {
         const firestore = getFirestore();
@@ -156,16 +133,16 @@ const HomePage = ({ userDetails }) => {
 
         await updateDoc(channelDocRef, {
             joined: arrayRemove(userId),
-        });
-    };
+        })
+    }
 
     const joinCall = async (type, server, channel, userToCall) => {
-        if (isInCall) {
+        if(isInCall) {
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",
                 description: "You are already in a call. Please leave the current call to join another.",
-            });
+            })
             return;
         }
 
@@ -195,21 +172,20 @@ const HomePage = ({ userDetails }) => {
                 const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
                 const agoraClient = AgoraRTC.createClient({
                     mode: "rtc",
-                    codec: "vp8",
+                    codec: "vp8"
                 });
 
                 clientRef.current = agoraClient;
                 await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
 
-                if(isMicOn) {
-                    const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                    setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
-                    await agoraClient.publish(audioTrack);
-                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, avatar: userDetails.avatarname, username: userDetails.username }]);
-                } else {
-                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, avatar: userDetails.avatarname, username: userDetails.username }]);
-                }
-                
+                setIsVideoOn(true);
+                setIsMicOn(true);
+                const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                const videoTrack = await AgoraRTC.createCameraVideoTrack();
+                setLocalAudioTrack(audioTrack);
+                setLocalVideoTrack(videoTrack);
+                await agoraClient.publish([audioTrack, videoTrack]);
+                setRemoteUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, videoTrack }]);
 
                 agoraClient.on("user-published", handleUserPublished);
                 agoraClient.on("user-unpublished", handleUserUnpublished);
@@ -223,7 +199,8 @@ const HomePage = ({ userDetails }) => {
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.",
                     description: "An error occurred while trying to join the call: " + error.message,
-                })
+                });
+                leaveCall();
             }
         }
     };
@@ -234,29 +211,28 @@ const HomePage = ({ userDetails }) => {
             await client.subscribe(user, mediaType);
 
             if (mediaType === "video") {
-                setUsers((prevUsers) => [...prevUsers, user]);
+                const videoTrack = user.videoTrack;
+                setRemoteUsers((prevUsers) => [...prevUsers, { id: user.uid, videoTrack }]);
             }
 
             if (mediaType === "audio") {
                 user.audioTrack.play();
-                setUsers((prevUsers) => prevUsers.map(u => u.id === user.uid ? { ...u, audioTrack: user.audioTrack } : u));
             }
         }
     };
 
     const handleUserUnpublished = (user, mediaType) => {
         if (mediaType === "video") {
-            setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
+            setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
         }
 
         if (mediaType === "audio") {
             user.audioTrack.stop();
-            setUsers((prevUsers) => prevUsers.map(u => u.id === user.uid ? { ...u, audioTrack: null } : u));
         }
     };
 
     const handleUserLeft = (user) => {
-        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
+        setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
     };
 
     const leaveCall = () => {
@@ -265,19 +241,21 @@ const HomePage = ({ userDetails }) => {
         setIsVideoOn(false);
         setUserToCall(null);
 
-        if (serverCall && channelCall) {
+        if(serverCall && channelCall) {
             removeJoinedMember(serverCall.id, channelCall.id, userDetails.id);
             setServerCall(null);
             setChannelCall(null);
         }
 
-        if (localTracks.audioTrack)
-            localTracks.audioTrack.close();
-        if (localTracks.videoTrack)
-            localTracks.videoTrack.close();
+        if (localAudioTrack)
+            localAudioTrack.close();
+        if (localVideoTrack)
+            localVideoTrack.close();
         const client = clientRef.current;
         if (client)
             client.leave();
+
+        setRemoteUsers([]);
     };
 
     return (
