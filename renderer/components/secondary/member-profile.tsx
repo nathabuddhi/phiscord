@@ -90,10 +90,16 @@ export default function MemberProfile({ userId, changeUserToChat}) {
                         timestamp: serverTimestamp(),
                         status: "pending"
                     });
+                    const notifQuery = collection(firestore, `users/${userToAddId}/notifications`);
+                    await addDoc(notifQuery, {
+                        content: "Sent you a friend request.",
+                        from: currUserId,
+                    });
                     toast({
                         title: "Success!",
                         description: "Friend request sent.",
                     });
+                    
                 }
             } 
         } catch (error) {

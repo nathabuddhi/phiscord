@@ -154,6 +154,11 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 userId: currUser.id,
                 type: "text"
             });
+            const notifQuery = collection(firestore, `users/${toChatUser.id}/notifications`);
+            await addDoc(notifQuery, {
+                content: "Sent you a message.",
+                from: currUser.id,
+            });
             setMessageInput("");
         } catch (error) {
             toast({
@@ -207,7 +212,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 )}
             </ScrollArea>
             <div className="m-[10px] flex relative">
-                <UploadDMFile dmID={directMessageId} />
+                <UploadDMFile dmID={directMessageId} receiverID={toChatUser.id} />
                 <Input
                     className="placeholder:italic bg-darkerbackground w-full"
                     placeholder="Send a message"

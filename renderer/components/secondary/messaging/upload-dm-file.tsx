@@ -8,7 +8,7 @@ import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/fire
 import { useToast } from "@/components/ui/use-toast";
 import { getAuth } from "firebase/auth";
 
-export default function UploadFile({ dmID }) {
+export default function UploadFile({ dmID, receiverID }) {
     const { toast } = useToast();
     const storage = getStorage();
     const firestore = getFirestore();
@@ -61,6 +61,12 @@ export default function UploadFile({ dmID }) {
             });
             setFile(null);
             setDialogOpen(false);
+
+            const notifQuery = collection(firestore, `users/${receiverID}/notifications`);
+            await addDoc(notifQuery, {
+                content: "Sent you a file.",
+                from: auth.currentUser.uid,
+            });
         } catch (error) {
             toast({
                 variant: "destructive",

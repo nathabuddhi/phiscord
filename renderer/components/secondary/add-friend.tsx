@@ -105,6 +105,11 @@ export default function AddFriend() {
                         timestamp: serverTimestamp(),
                         status: "pending"
                     });
+                    const notifQuery = collection(firestore, `users/${userToAddId}/notifications`);
+                    await addDoc(notifQuery, {
+                        content: "Sent you a friend request.",
+                        from: userId,
+                    });
                     toast({
                         
                         title: "Success!",

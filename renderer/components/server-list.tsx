@@ -7,6 +7,7 @@ import { getFirestore, collection, onSnapshot, query, where } from "firebase/fir
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuth } from "firebase/auth";
+import NotificationsBar from "@/components/secondary/notifications-bar";
 
 export default function ServerList({ selectServer, changeViewType }) {
     const [servers, setServers] = useState([]);
@@ -56,6 +57,7 @@ export default function ServerList({ selectServer, changeViewType }) {
             <div className="p-4 flex flex-col items-center">
                 <FriendButton changeViewType={changeViewType} changeToFriendView={changeToFriendView} />
                 <CreateServer onServerCreated={createServer} />
+                <NotificationsBar />
                 <Separator className="mb-[6px] mt-[3px]" />
                 {servers.map((server) => (
                     <React.Fragment key={server.id}>
