@@ -1,0 +1,29 @@
+[33mcommit 63db8088101da6c40ed0a917d7c5e8da508a9d31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: nathabuddhi <nathabuddhi@gmail.com>
+Date:   Mon Jul 8 22:37:26 2024 +0700
+
+    temp
+
+[33mcommit fb2c9746c9e201100afc742bb334c31c59894231[m
+Author: Natha Buddhi Pratama Chandra <148126095+nathabuddhi@users.noreply.github.com>
+Date:   Mon Jul 8 20:05:58 2024 +0700
+
+    Update README.md
+
+[33mcommit c73737ce138db58bbd4e98d71a546b2ffa52ff54[m
+Author: nathabuddhi <nathabuddhi@gmail.com>
+Date:   Mon Jul 8 20:04:53 2024 +0700
+
+    ReadmeUpdate
+
+[33mcommit c1d6e19403c25e7e64e99a3f504335ab0484e1a5[m
+Author: nathabuddhi <nathabuddhi@gmail.com>
+Date:   Mon Jul 8 19:58:23 2024 +0700
+
+    Some improvements to the call feature and minor visual changes for other parts. Call updated to no longer start camera on join, but only when turned on by the user. Same with mic.
+
+[33mcommit 96ffd9718cc6bd3c241e32c7e56e34251d81b490[m
+Author: nathabuddhi <nathabuddhi@gmail.com>
+Date:   Sun Jul 7 22:50:22 2024 +0700
+
+    Initial Commit

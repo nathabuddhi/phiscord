@@ -12,7 +12,7 @@ import FriendChatBox from '@/components/friend-chat-box';
 import CallInfo from '@/components/call-info';
 import CallBox from '@/components/call-box';
 import { getAuth } from 'firebase/auth';
-import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
 
 const HomePage = ({ userDetails }) => {
@@ -30,8 +30,9 @@ const HomePage = ({ userDetails }) => {
     const [channelCall, setChannelCall] = useState(null);
     const [callType, setCallType] = useState();
     const [userToCall, setUserToCall] = useState(null);
-    const [users, setUsers] = useState([]);
-    const [localTracks, setLocalTracks] = useState({ videoTrack: null, audioTrack: null });
+    const [remoteUsers, setRemoteUsers] = useState([]);
+    const [localVideoTrack, setLocalVideoTrack] = useState(null);
+    const [localAudioTrack, setLocalAudioTrack] = useState(null);
 
     const clientRef = useRef(null);
     const APP_ID = "0403f6945a0d406c9efa7cb00f5c7aca";
@@ -90,44 +91,21 @@ const HomePage = ({ userDetails }) => {
     };
 
     const toggleVideo = async () => {
-        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
-        if (!localTracks.videoTrack) {
-            try {
-                const videoTrack = await AgoraRTC.createCameraVideoTrack();
-                setLocalTracks(prevTracks => ({ ...prevTracks, videoTrack }));
-                await clientRef.current.publish(videoTrack);
-                await videoTrack.play(`local-video-${userDetails.id}`);
-                setIsViewingCall(true);
-            } catch (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Uh oh! Something went wrong.",
-                    description: "An error occurred while trying to start your video: " + error.message,
-                })
-            }
-            
-        } else {
+        if (localVideoTrack) {
             if (isVideoOn) {
-                localTracks.videoTrack.stop();
-                localTracks.videoTrack.setEnabled(false);
+                localVideoTrack.stop();
+                localVideoTrack.setEnabled(false);
             } else {
-                localTracks.videoTrack.setEnabled(true);
-                localTracks.videoTrack.play(`local-video-${userDetails.id}`);
+                localVideoTrack.setEnabled(true);
+                localVideoTrack.play(`local-${userDetails.id}`);
             }
+            setIsVideoOn((prevState) => !prevState);
         }
-        setIsVideoOn((prevState) => !prevState);
     };
 
     const toggleMic = async() => {
-        const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
-        if(!localTracks.audioTrack) {
-            const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-            setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
-
-            await clientRef.current.publish(audioTrack);
-        }
-        if (localTracks.audioTrack) {
-            localTracks.audioTrack.setEnabled(!isMicOn);
+        if (localAudioTrack) {
+            localAudioTrack.setEnabled(!isMicOn);
         }
         setIsMicOn((prevState) => !prevState);
     };
@@ -200,30 +178,29 @@ const HomePage = ({ userDetails }) => {
                 clientRef.current = agoraClient;
                 await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
 
-                if(isMicOn) {
-                    const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                    setLocalTracks(prevTracks => ({ ...prevTracks, audioTrack }));
-                    await agoraClient.publish(audioTrack);
-                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, avatar: userDetails.avatarname, username: userDetails.username }]);
-                } else {
-                    setUsers((prevUsers) => [...prevUsers, { id: userDetails.id, avatar: userDetails.avatarname, username: userDetails.username }]);
-                }
-                
+                setIsVideoOn(true);
+                setIsMicOn(true);
+                const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                const videoTrack = await AgoraRTC.createCameraVideoTrack();
+                setLocalAudioTrack(audioTrack);
+                setLocalVideoTrack(videoTrack);
+                await agoraClient.publish([audioTrack, videoTrack]);
+                setRemoteUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, videoTrack }]);
 
                 agoraClient.on("user-published", handleUserPublished);
                 agoraClient.on("user-unpublished", handleUserUnpublished);
                 agoraClient.on("user-left", handleUserLeft);
 
                 setIsInCall(true);
-                setIsViewingCall(false);
-                setIsVideoOn(false);
+                setIsViewingCall(true);
                 addJoinedMember(server.id, channel.id, userDetails.id);
             } catch (error) {
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.",
                     description: "An error occurred while trying to join the call: " + error.message,
-                })
+                });
+                leaveCall();
             }
         }
     };
@@ -234,7 +211,8 @@ const HomePage = ({ userDetails }) => {
             await client.subscribe(user, mediaType);
 
             if (mediaType === "video") {
-                setUsers((prevUsers) => [...prevUsers, user]);
+                const videoTrack = user.videoTrack;
+                setRemoteUsers((prevUsers) => [...prevUsers, { id: user.uid, videoTrack }]);
             }
 
             if (mediaType === "audio") {
@@ -245,7 +223,7 @@ const HomePage = ({ userDetails }) => {
 
     const handleUserUnpublished = (user, mediaType) => {
         if (mediaType === "video") {
-            setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
+            setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
         }
 
         if (mediaType === "audio") {
@@ -254,7 +232,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const handleUserLeft = (user) => {
-        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.id));
+        setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
     };
 
     const leaveCall = () => {
@@ -269,13 +247,15 @@ const HomePage = ({ userDetails }) => {
             setChannelCall(null);
         }
 
-        if (localTracks.audioTrack)
-            localTracks.audioTrack.close();
-        if (localTracks.videoTrack)
-            localTracks.videoTrack.close();
+        if (localAudioTrack)
+            localAudioTrack.close();
+        if (localVideoTrack)
+            localVideoTrack.close();
         const client = clientRef.current;
         if (client)
             client.leave();
+
+        setRemoteUsers([]);
     };
 
     return (
@@ -314,7 +294,7 @@ const HomePage = ({ userDetails }) => {
                 {!isViewingCall && !isViewingServer && isViewingChat && <FriendChatBox toChatId={chatId} changeViewType={changeViewType} joinCall={joinCall} />}
                 {!isViewingCall && !isViewingServer && !isViewingChat && <FriendBox changeUserToChat={changeUserToChat} />}
                 {!isViewingCall && isViewingServer && <MemberList server={server} changeUserToChat={changeUserToChat} />}
-                {isViewingCall && <CallBox users={users} userDetails={userDetails} />}
+                {isViewingCall && <CallBox remoteUsers={remoteUsers} localUser={userDetails} serverId={serverCall.id} channelId={channelCall.id} localVideoTrack={localVideoTrack} localVideoOn={isVideoOn} />}
             </div>
         </>
     );
