@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { doc, getFirestore, onSnapshot } from 'firebase/firestore';
 
-export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack, localVideoOn, remoteUserTrack }) {
+export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack, localVideoOn, remoteTracks }) {
     const [remoteUser, setRemoteUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -30,12 +30,14 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
 
     useEffect(() => {
         const playVideoTracks = () => {
-            if (remoteUserTrack && remoteUserTrack.videoTrack) {
-                const videoElement = document.getElementById(`remote-${remoteUserId}`);
-                if (videoElement) {
-                    remoteUserTrack.videoTrack.play(`remote-${remoteUserId}`);
+            remoteTracks.forEach((track) => {
+                if (track.videoTrack) {
+                    const videoElement = document.getElementById(`remote-${track.id}`);
+                    if (videoElement) {
+                        track.videoTrack.play(`remote-${track.id}`);
+                    }
                 }
-            }
+            });
         };
 
         const waitVideoLoad = setTimeout(playVideoTracks, 100);
@@ -43,7 +45,7 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
         return () => {
             clearTimeout(waitVideoLoad);
         };
-    }, [remoteUserTrack]);
+    }, [remoteTracks]);
 
     if(loading)
         return null;

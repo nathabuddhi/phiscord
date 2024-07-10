@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { doc, getFirestore, onSnapshot } from 'firebase/firestore';
 
-export default function CallBox({ localUser, serverId, channelId, localVideoTrack, localVideoOn, remoteUsers }) {
+export default function CallBox({ localUser, serverId, channelId, localVideoTrack, localVideoOn, remoteTracks }) {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
@@ -56,11 +56,11 @@ export default function CallBox({ localUser, serverId, channelId, localVideoTrac
 
     useEffect(() => {
         const playVideoTracks = () => {
-            remoteUsers.forEach((user) => {
-                if (user.videoTrack) {
-                    const videoElement = document.getElementById(`remote-${user.id}`);
+            remoteTracks.forEach((track) => {
+                if (track.videoTrack) {
+                    const videoElement = document.getElementById(`remote-${track.id}`);
                     if (videoElement) {
-                        user.videoTrack.play(`remote-${user.id}`);
+                        track.videoTrack.play(`remote-${track.id}`);
                     }
                 }
             });
@@ -71,7 +71,7 @@ export default function CallBox({ localUser, serverId, channelId, localVideoTrac
         return () => {
             clearTimeout(waitVideoLoad);
         };
-    }, [remoteUsers]);
+    }, [remoteTracks]);
 
     return (
         <div className="w-full h-100vh bg-background flex justify-center items-center overflow-hidden">

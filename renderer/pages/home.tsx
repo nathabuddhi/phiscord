@@ -14,6 +14,7 @@ import CallBox from '@/components/call-box';
 import { getAuth } from 'firebase/auth';
 import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
+import FriendCallBox from '@/components/friend-call-box';
 
 const HomePage = ({ userDetails }) => {
     const [isViewingServer, setIsViewingServer] = useState(false);
@@ -30,7 +31,7 @@ const HomePage = ({ userDetails }) => {
     const [channelCall, setChannelCall] = useState(null);
     const [callType, setCallType] = useState();
     const [userToCall, setUserToCall] = useState(null);
-    const [remoteUsers, setRemoteUsers] = useState([]);
+    const [remoteTracks, setRemoteTracks] = useState([]);
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
     const [localAudioTrack, setLocalAudioTrack] = useState(null);
 
@@ -107,10 +108,25 @@ const HomePage = ({ userDetails }) => {
         if (localAudioTrack) {
             localAudioTrack.setEnabled(!isMicOn);
         }
+        if(isDeafened && !isMicOn) {
+            toggleDeafened();
+        }
         setIsMicOn((prevState) => !prevState);
     };
 
     const toggleDeafened = () => {
+        if (clientRef.current) {
+            clientRef.current.remoteUsers.forEach(user => {
+                if (isDeafened) {
+                    user.audioTrack?.setVolume(100);
+                } else {
+                    user.audioTrack?.setVolume(0);
+                }
+            });
+        }
+        if(isMicOn && !isDeafened) {
+            toggleMic();
+        }
         setIsDeafened((prevState) => !prevState);
     };
 
@@ -136,7 +152,7 @@ const HomePage = ({ userDetails }) => {
         })
     }
 
-    const joinCall = async (type, server, channel, userToCall) => {
+    const joinCall = async (type, server, channel, userToCall, directMessageID) => {
         if(isInCall) {
             toast({
                 variant: "destructive",
@@ -176,7 +192,11 @@ const HomePage = ({ userDetails }) => {
                 });
 
                 clientRef.current = agoraClient;
-                await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
+                if(callType === 'channel') {
+                    await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
+                } else {
+                    await agoraClient.join(APP_ID, directMessageID, null, userDetails.id);
+                }
 
                 setIsVideoOn(true);
                 setIsMicOn(true);
@@ -185,7 +205,7 @@ const HomePage = ({ userDetails }) => {
                 setLocalAudioTrack(audioTrack);
                 setLocalVideoTrack(videoTrack);
                 await agoraClient.publish([audioTrack, videoTrack]);
-                setRemoteUsers((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, videoTrack }]);
+                setRemoteTracks((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, videoTrack }]);
 
                 agoraClient.on("user-published", handleUserPublished);
                 agoraClient.on("user-unpublished", handleUserUnpublished);
@@ -193,7 +213,8 @@ const HomePage = ({ userDetails }) => {
 
                 setIsInCall(true);
                 setIsViewingCall(true);
-                addJoinedMember(server.id, channel.id, userDetails.id);
+                if(type === 'channel')
+                    addJoinedMember(server.id, channel.id, userDetails.id);
             } catch (error) {
                 toast({
                     variant: "destructive",
@@ -212,7 +233,7 @@ const HomePage = ({ userDetails }) => {
 
             if (mediaType === "video") {
                 const videoTrack = user.videoTrack;
-                setRemoteUsers((prevUsers) => [...prevUsers, { id: user.uid, videoTrack }]);
+                setRemoteTracks((prevUsers) => [...prevUsers, { id: user.uid, videoTrack }]);
             }
 
             if (mediaType === "audio") {
@@ -223,7 +244,7 @@ const HomePage = ({ userDetails }) => {
 
     const handleUserUnpublished = (user, mediaType) => {
         if (mediaType === "video") {
-            setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
+            setRemoteTracks((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
         }
 
         if (mediaType === "audio") {
@@ -232,7 +253,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const handleUserLeft = (user) => {
-        setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
+        setRemoteTracks((prevUsers) => prevUsers.filter((u) => u.id !== user.uid));
     };
 
     const leaveCall = () => {
@@ -255,7 +276,7 @@ const HomePage = ({ userDetails }) => {
         if (client)
             client.leave();
 
-        setRemoteUsers([]);
+        setRemoteTracks([]);
     };
 
     return (
@@ -294,7 +315,8 @@ const HomePage = ({ userDetails }) => {
                 {!isViewingCall && !isViewingServer && isViewingChat && <FriendChatBox toChatId={chatId} changeViewType={changeViewType} joinCall={joinCall} />}
                 {!isViewingCall && !isViewingServer && !isViewingChat && <FriendBox changeUserToChat={changeUserToChat} />}
                 {!isViewingCall && isViewingServer && <MemberList server={server} changeUserToChat={changeUserToChat} />}
-                {isViewingCall && <CallBox remoteUsers={remoteUsers} localUser={userDetails} serverId={serverCall.id} channelId={channelCall.id} localVideoTrack={localVideoTrack} localVideoOn={isVideoOn} />}
+                {isViewingCall && callType == 'channel' && <CallBox remoteTracks={remoteTracks} localUser={userDetails} serverId={serverCall.id} channelId={channelCall.id} localVideoTrack={localVideoTrack} localVideoOn={isVideoOn} />}
+                {isViewingCall && callType != 'channel' && <FriendCallBox remoteTracks={remoteTracks} localUser={userDetails} localVideoTrack={localVideoTrack} localVideoOn={isVideoOn} remoteUserId={userToCall.id} />}
             </div>
         </>
     );
