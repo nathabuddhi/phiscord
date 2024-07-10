@@ -27,8 +27,8 @@ export default function SettingsComponent({ userDetails }) {
                         <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="general">General</TabsTrigger>
                             <TabsTrigger value="password">Password</TabsTrigger>
-                            <TabsTrigger value="overlay">Overlay</TabsTrigger>
                             <TabsTrigger value="privacy">Privacy</TabsTrigger>
+                            <TabsTrigger value="overlay">Others</TabsTrigger>
                         </TabsList>
                         <TabsContent value="general">
                             <GeneralSettings userDetails={userDetails} />
@@ -36,11 +36,11 @@ export default function SettingsComponent({ userDetails }) {
                         <TabsContent value="password">
                             <PasswordSettings userDetails={userDetails} />
                         </TabsContent>
-                        <TabsContent value="overlay">
-                            <OverlaySettings userDetails={userDetails} />
-                        </TabsContent>
                         <TabsContent value="privacy">
                             <PrivacySettings userDetails={userDetails} />
+                        </TabsContent>
+                        <TabsContent value="overlay">
+                            <OverlaySettings userDetails={userDetails} />
                         </TabsContent>
                     </Tabs>
                 </DialogContent>

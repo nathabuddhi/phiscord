@@ -30,14 +30,13 @@ export default function Message({ message, server, channel }) {
             } else {
                 setAuthor(null);
             }
-            setLoading(false);
         });
 
         const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {
-                setUser(userDoc.data());
                 const { blocked = []} = userDoc.data();
                 setBlocked(blocked.includes(message.userId));
+                setUser(userDoc.data());
             }
         });
 
@@ -46,6 +45,12 @@ export default function Message({ message, server, channel }) {
             unsubscribeUser();
         };
     }, [message.userId]);
+
+    useEffect(() => {
+        if (user && author) {
+            setLoading(false);
+        }
+    }, [user, author]);
 
     const isAdminOrOwner = (userId) => {
         if (!server) return false;
@@ -95,7 +100,7 @@ export default function Message({ message, server, channel }) {
     return (
         <HoverCard openDelay={1000} closeDelay={100}>
             <HoverCardTrigger>
-                <div className={`flex flex-row m-2 p-1 rounded-[10px] ${containsMention() ? "bg-[#484434] hover:bg-[#423f30]" : "hover:bg-darkerbackground "}`}>
+                <div className={`flex flex-row m-2 p-1 rounded-[10px] ${containsMention() ? "bg-[#8f845b] hover:bg-[#787051] dark:bg-[#484434] dark:hover:bg-[#423f30]" : "hover:bg-darkerbackground "}`}>
                     <Avatar>
                         <AvatarFallback className="border-[1px] border-serverlistbackground">
                             {author.avatarname}
@@ -109,21 +114,21 @@ export default function Message({ message, server, channel }) {
                             <p className="text-xs text-gray-400">{new Date(message.timestamp?.toDate()).toLocaleString()}</p>
                         </div>
                         {message.type === "image" ? (
-                            <>
-                            <p className="italic">Image: {message.fileName}</p>
-                            <div className="max-w-full max-h-80">
-                                <img src={message.content} alt="Uploaded" className="w-auto max-w-full h-auto max-h-80 rounded" />
+                            <div className={`text-${user.font ? user.font : "base"}`}>
+                                <p className="italic">Image: {message.fileName}</p>
+                                <div className="max-w-full max-h-80">
+                                    <img src={message.content} alt="Uploaded" className="w-auto max-w-full h-auto max-h-80 rounded" />
+                                </div>
+                                <div className='mt-2'>
+                                    <Button className="w-auto">
+                                        <Link href={message.content} rel="noopener noreferrer">
+                                            Download Image ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
+                                        </Link>
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="mt-2">
-                                <Button className="w-auto">
-                                    <Link href={message.content} rel="noopener noreferrer">
-                                        Download Image ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
-                                    </Link>
-                                </Button>
-                            </div>
-                        </>
                         ) : (message.type === "file" ? (
-                            <div>
+                            <div className={`text-${user.font ? user.font : "base"}`}>
                                 <p className="italic">File: {message.fileName}</p>
                                 <Button>
                                     <Link href={message.content} rel="noopener noreferrer">
@@ -137,7 +142,9 @@ export default function Message({ message, server, channel }) {
                                     {decoratedText}
                                 </a>
                                 )}>
-                                <p className={LinkStyles.messageLink}>{message.content}</p>
+                                <div className={`text-${user.font ? user.font : "base"}`}>
+                                    <p className={LinkStyles.messageLink}>{message.content}</p>
+                                </div>
                             </Linkify>
                         ))}
                     </div>

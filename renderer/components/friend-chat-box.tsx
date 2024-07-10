@@ -1,6 +1,6 @@
 import { Hash, SmilePlus, Search, PhoneCall } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc } from "firebase/firestore";
 import DirectMessage from "@/components/secondary/messaging/dm-message";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,6 +24,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const [unsubscribeMessages, setUnsubscribeMessages] = useState(null);
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const tempUser = getAuth().currentUser;
@@ -108,6 +109,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 });
 
                 setUnsubscribeMessages(() => unsubscribe);
+                setLoading(false);
             };
 
             checkAndCreateDM();
@@ -176,6 +178,9 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const searchedMessages = messages.filter(message => 
         message.content.toLowerCase().includes(searchMessage.toLowerCase())
     );
+
+    if(loading)
+        return null
 
     return (
         <div className="w-[calc(100vw-280px)] flex flex-col bg-background border-r-4 border-darkerbackground">

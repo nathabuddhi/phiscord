@@ -58,7 +58,7 @@ export default function ServerList({ selectServer, changeViewType }) {
                 <FriendButton changeViewType={changeViewType} changeToFriendView={changeToFriendView} />
                 <CreateServer onServerCreated={createServer} />
                 <NotificationsBar />
-                <Separator className="mb-[6px] mt-[3px]" />
+                <Separator className="mb-[6px] mt-[3px] bg-darkerbackground dark:bg-background" />
                 {servers.map((server) => (
                     <React.Fragment key={server.id}>
                         <HoverCard openDelay={300} closeDelay={0}>

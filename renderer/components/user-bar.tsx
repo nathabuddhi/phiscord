@@ -10,13 +10,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import SettingsComponent from '@/components/settings/settings';
 
 export default function UserBar({ userDetails, isMicOn, isDeafened, toggleDeafened, toggleMic }) {
-    // const [isMicOn, setIsMicOn] = useState(true);
-    // const [isVolumeOn, setIsVolumeOn] = useState(true);
     const { toast } = useToast();
     const [user, setUser] = useState(null);
     const [status, setStatus] = useState("available");
     const [customStatus, setCustomStatus] = useState("");
-    const isInitialRender = useRef(true);
 
     const changeStatus = async (value) => {
         if (value === 'custom') {
@@ -78,6 +75,8 @@ export default function UserBar({ userDetails, isMicOn, isDeafened, toggleDeafen
     }, [toast]);
 
     function getStatus() {
+        if(!status || !customStatus)
+            return;
         if (status === 'custom') {
             return customStatus.length > 9 ? customStatus.slice(0, 6) + "..." : customStatus;
         }
@@ -92,7 +91,8 @@ export default function UserBar({ userDetails, isMicOn, isDeafened, toggleDeafen
                     <DropdownMenuTrigger asChild>
                         <div className="flex flex-row justify-evenly hover:bg-barbackgroundhover hover:cursor-pointer rounded-[10px] px-[5px] py-[3px] m-0">
                             <Avatar>
-                                <AvatarFallback>{user?.avatarname || user?.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                {user && <AvatarFallback>{ user.avatarname}</AvatarFallback>}
+                                {!user && <AvatarFallback>??</AvatarFallback>}
                             </Avatar>
                             <div className="flex flex-col ml-[10px] ">
                                 <p className="text-sm">{user ? user.username : "Username"}</p>
@@ -107,23 +107,21 @@ export default function UserBar({ userDetails, isMicOn, isDeafened, toggleDeafen
                             <DropdownMenuRadioItem value="available">available</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="away from keyboard">away from keyboard</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="busy">busy</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="custom">custom</DropdownMenuRadioItem>
+                            {/* <DropdownMenuRadioItem value="custom">custom</DropdownMenuRadioItem> */}
                         </DropdownMenuRadioGroup>
-                        {status === 'custom' && (
-                            <input
-                                type="text"
-                                placeholder="Enter custom status"
-                                value={customStatus}
-                                onChange={(e) => setCustomStatus(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        changeCustomStatus(e);
-                                    }
-                                }}
-                                className="mt-2 p-1 border rounded w-full"
-                            />
-                        )}
+                        <input
+                            type="text"
+                            placeholder="Enter custom status"
+                            value={customStatus}
+                            onChange={(e) => setCustomStatus(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    changeCustomStatus(e);
+                                }
+                            }}
+                            className="mt-2 p-1 border rounded w-full"
+                        />
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="flex">

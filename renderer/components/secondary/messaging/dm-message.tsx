@@ -30,13 +30,13 @@ export default function DirectMessage({ message, dmID }) {
             } else {
                 setAuthor(null);
             }
-            setLoading(false);
         });
 
         const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {
                 const { blocked = [] } = userDoc.data();
                 setBlocked(blocked.includes(message.userId));
+                setUser(userDoc.data());
             }
         });
 
@@ -45,6 +45,12 @@ export default function DirectMessage({ message, dmID }) {
             unsubscribeUser();
         };
     }, [message.userId]);
+
+    useEffect(() => {
+        if (user && author) {
+            setLoading(false);
+        }
+    }, [user, author]);
 
     if (loading) {
         return (
@@ -96,7 +102,7 @@ export default function DirectMessage({ message, dmID }) {
                             <p className="text-xs text-gray-400">{new Date(message.timestamp?.toDate()).toLocaleString()}</p>
                         </div>
                         {message.type === "image" ? (
-                            <>
+                            <div className={`text-${user.font ? user.font : "base"}`}>
                                 <p className="italic">Image: {message.fileName}</p>
                                 <div className="max-w-full max-h-80">
                                     <img src={message.content} alt="Uploaded" className="w-auto max-w-full h-auto max-h-80 rounded" />
@@ -108,9 +114,9 @@ export default function DirectMessage({ message, dmID }) {
                                         </Link>
                                     </Button>
                                 </div>
-                            </>
+                            </div>
                         ) : (message.type === "file" ? (
-                                <div>
+                                <div className={`text-${user.font ? user.font : "base"}`}>
                                     <p className="italic">File: {message.fileName}</p>
                                     <Button>
                                         <Link href={message.content} rel="noopener noreferrer">
@@ -124,7 +130,9 @@ export default function DirectMessage({ message, dmID }) {
                                     {decoratedText}
                                 </a>
                                 )}>
-                                <p className={LinkStyles.messageLink}>{message.content}</p>
+                                <div className={`text-${user.font ? user.font : "base"}`}>
+                                    <p className={LinkStyles.messageLink}>{message.content}</p>
+                                </div>
                             </Linkify>
                         ))}
                     </div>

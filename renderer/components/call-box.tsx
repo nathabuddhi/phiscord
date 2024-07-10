@@ -61,18 +61,15 @@ export default function CallBox({ localUser, serverId, channelId, localVideoTrac
                     const videoElement = document.getElementById(`remote-${user.id}`);
                     if (videoElement) {
                         user.videoTrack.play(`remote-${user.id}`);
-                    } else {
-                        console.warn(`Video element not found for remote-${user.id}`);
                     }
                 }
             });
         };
 
-        // Call the function after a delay to ensure elements are rendered
-        const timeoutId = setTimeout(playVideoTracks, 100);
+        const waitVideoLoad = setTimeout(playVideoTracks, 100);
 
         return () => {
-            clearTimeout(timeoutId);
+            clearTimeout(waitVideoLoad);
         };
     }, [remoteUsers]);
 
