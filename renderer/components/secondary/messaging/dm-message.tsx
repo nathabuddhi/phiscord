@@ -138,9 +138,9 @@ export default function DirectMessage({ message, dmID }) {
                     </div>
                 </div>
             </HoverCardTrigger>
-            {user && author && (user.uid === author.id) && (
+            {user && author && (user.id === author.id) && (
                 <HoverCardContent className="w-auto">
-                    {user.uid === author.id && (
+                    {user.id === author.id && (
                         <EditDMMessage message={message} dmID={dmID} />
                     )}
                     <DeleteDMMessage message={message} dmID={dmID} />

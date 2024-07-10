@@ -12,6 +12,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import Picker from '@emoji-mart/react';
 import { useTheme } from "next-themes";
+import Filter from 'bad-words';
 
 export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const { toast } = useToast();
@@ -25,6 +26,8 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
     const [loading, setLoading] = useState(true);
+
+    const filter = new Filter();
 
     useEffect(() => {
         const tempUser = getAuth().currentUser;
@@ -140,6 +143,13 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 description: "You cannot send messages to this user because you are not friends and this user is not accepting messages from non-friends."
             });
             return;
+        } else if(filter.isProfane(content)) {
+            toast({
+                variant: "destructive",
+                title: "Profanity detected.",
+                description: "Please refrain from using profanity in your messages. We want to keep PHiscord a safe and friendly place for everyone."
+            })
+            return;
         } else if(!toChatUser.messages.includes(currUser.id)) {
             const receiverDocRef = doc(firestore, "users", toChatUser.id);
 
@@ -191,7 +201,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 <div className="flex flex-row">
                 <Hash size={30} className="self-center" />
                 <h3 className="text-foreground font-bold text-lg ml-2 self-center">{toChatUser ? toChatUser.username : "Direct Message"}</h3>
-                <Button size="icon" variant="outline" className="self-center ml-2" onClick={() => joinCall("user", null, null, toChatUser)}>
+                <Button size="icon" variant="outline" className="self-center ml-2" onClick={() => joinCall("user", null, null, toChatUser, directMessageId)}>
                     <PhoneCall />
                 </Button>
                 </div>

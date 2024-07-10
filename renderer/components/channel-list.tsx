@@ -127,7 +127,7 @@ export default function ChannelList({ server, selectTextChannel, changeViewType,
                                                 size="sm"
                                                 variant="ghost"
                                                 className="text-sm flex flex-row justify-normal ml-4"
-                                                onClick={() => joinCall("channel", server, vchannel, null)}
+                                                onClick={() => joinCall("channel", server, vchannel, null, null)}
                                             >
                                                 <Volume1 className="mr-1" size={20} /> {vchannel.name}
                                             </Button>

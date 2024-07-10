@@ -11,6 +11,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import Picker from '@emoji-mart/react';
 import { useTheme } from "next-themes";
+import Filter from 'bad-words';
 
 export default function ChatBox({ channel, server }) {
     const { toast } = useToast();
@@ -21,6 +22,8 @@ export default function ChatBox({ channel, server }) {
     const user = auth.currentUser;
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
+
+    const filter = new Filter();
 
     useEffect(() => {
         if (!server || !channel) return;
@@ -46,6 +49,15 @@ export default function ChatBox({ channel, server }) {
 
     const sendMessage = async (content) => {
         if (!content.trim()) return;
+
+        if(filter.isProfane(content)) {
+            toast({
+                variant: "destructive",
+                title: "Profanity detected.",
+                description: "Please refrain from using profanity in your messages. We want to keep PHiscord a safe and friendly place for everyone."
+            })
+            return;
+        } 
 
         try {
             const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
