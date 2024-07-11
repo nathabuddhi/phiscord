@@ -12,7 +12,7 @@ import FriendChatBox from '@/components/friend-chat-box';
 import CallInfo from '@/components/call-info';
 import CallBox from '@/components/call-box';
 import { getAuth } from 'firebase/auth';
-import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
+import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
 import FriendCallBox from '@/components/friend-call-box';
 
@@ -67,13 +67,13 @@ const HomePage = ({ userDetails }) => {
 
             if (!userData.messages.includes(userToChatId)) {
                 await updateDoc(userDocRef, {
-                    messages: arrayUnion(userToChatId),
+                    messages: arrayUnion(userToChatId)
                 });
             }
         }
 
-        friendChatView();
         setChatId(userToChatId);
+        friendChatView();
     };
 
     const serverView = () => {
@@ -161,16 +161,18 @@ const HomePage = ({ userDetails }) => {
             })
             return;
         }
-
+        let agoraChannelName;
         setCallType(type);
         if (type === "channel") {
             setServerCall(server);
             setChannelCall(channel);
             setUserToCall(null);
+            agoraChannelName = channel.id;
         } else if (type === "user") {
             setServerCall(null);
             setChannelCall(null);
             setUserToCall(userToCall);
+            agoraChannelName = directMessageID;
         } else {
             setIsViewingCall(false);
             setIsInCall(false);
@@ -192,11 +194,8 @@ const HomePage = ({ userDetails }) => {
                 });
 
                 clientRef.current = agoraClient;
-                if(callType === 'channel') {
-                    await agoraClient.join(APP_ID, channel.id, null, userDetails.id);
-                } else {
-                    await agoraClient.join(APP_ID, directMessageID, null, userDetails.id);
-                }
+
+                await agoraClient.join(APP_ID, agoraChannelName, null, userDetails.id);
 
                 setIsVideoOn(true);
                 setIsMicOn(true);

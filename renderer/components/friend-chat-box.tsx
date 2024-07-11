@@ -32,7 +32,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     useEffect(() => {
         const tempUser = getAuth().currentUser;
 
-        if (!tempUser || !toChatId) {
+        if (!toChatId) {
             changeViewType(2);
             toast({
                 variant: "destructive",

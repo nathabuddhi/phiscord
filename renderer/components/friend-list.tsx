@@ -47,7 +47,7 @@ export default function FriendList({ changeViewType, changeUserToChat, isInCall 
                     <AddFriend />
                     <Separator />
                     {userMessages.length > 0 && userMessages.map((messageUser) => (
-                        <Button className="w-full justify-normal p-2 m-2" key={messageUser.id} variant="ghost" onClick={() => {changeViewType(3); changeUserToChat(messageUser.id)}}>
+                        <Button className="w-full justify-normal p-2 m-2" key={messageUser.id} variant="ghost" onClick={async () => {await changeUserToChat(messageUser.id); changeViewType(3);}}>
                             <Avatar className="mr-2">
                                 <AvatarFallback>{messageUser.avatarname}</AvatarFallback>
                             </Avatar>

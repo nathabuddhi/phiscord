@@ -10,23 +10,28 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
         const firestore = getFirestore();
 
         const toCallDocRef = doc(firestore, 'users', remoteUserId);
-        const unsubcribe = onSnapshot(toCallDocRef, async (snapshot) => {
+        const unsubscribe = onSnapshot(toCallDocRef, async (snapshot) => {
             if (snapshot.exists()) {
                 setRemoteUser(snapshot.data());
             }
             setLoading(false);
-        })
+        });
 
         if (localVideoOn) {
-            const localVideoElement = document.getElementById(`local-${localUser.id}`);
-            if (localVideoElement) {
-                localVideoTrack.play(`local-${localUser.id}`);
-            }
+            const playLocalVideo = () => {
+                const localVideoElement = document.getElementById(`local-${localUser.id}`);
+                if (localVideoElement) {
+                    localVideoTrack.play(`local-${localUser.id}`);
+                } else {
+                    setTimeout(playLocalVideo, 100);
+                }
+            };
+            playLocalVideo();
         }
 
-        return () => unsubcribe();
+        return () => unsubscribe();
 
-    }, [localUser.id, localVideoOn, localVideoTrack, remoteUserId])
+    }, [localUser.id, localVideoOn, localVideoTrack, remoteUserId]);
 
     useEffect(() => {
         const playVideoTracks = () => {
