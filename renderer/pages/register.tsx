@@ -3,7 +3,7 @@ import SiteHeader from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -14,23 +14,23 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import Head from "next/head";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/components/firebase";
-import { setDoc, doc } from "firebase/firestore";
+import { setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import guestMiddleware from '@/components/middleware/guest-middleware';
+import { auth, db } from "@/components/firebase";
 
 const checkAge = (date) => {
-  const today = new Date();
-  const birthDate = new Date(date);
-  const age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-  const dayDifference = today.getDate() - birthDate.getDate();
+    const today = new Date();
+    const birthDate = new Date(date);
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    const dayDifference = today.getDate() - birthDate.getDate();
 
-  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
-    return age - 1;
-  }
-  return age;
+    if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+        return age - 1;
+    }
+    return age;
 };
 
 const formSchema = z.object({
@@ -47,6 +47,17 @@ const formSchema = z.object({
 function RegisterPage() {
     const { toast } = useToast();
 
+    const checkUsername = async (username) => {
+        const usersCollectionRef = collection(db, "users");
+        const docRef = query(usersCollectionRef, where("username", "==", username));
+    
+        const querySnapshot = await getDocs(docRef);
+        if (querySnapshot.empty)
+            return true;
+        else
+            return false;
+    }
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -58,6 +69,16 @@ function RegisterPage() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
+            if(checkUsername(values.username)) {
+                toast({
+                    variant: "destructive",
+                    title: "Username taken!",
+                    description: "The username you typed is already taken. Please try another username."
+                });
+                form.resetField('username');
+                return;
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
             if (user) {

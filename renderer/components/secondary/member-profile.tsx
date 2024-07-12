@@ -7,9 +7,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { getFirestore, doc, getDoc, addDoc, collection, onSnapshot, where, getDocs, serverTimestamp, query } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-export default function MemberProfile({ userId, changeUserToChat}) {
+export default function MemberProfile({ userId, changeUserToChat, serverId }) {
     const [user, setUser] = useState(null);
     const { toast } = useToast();
+    const [nickname, setNickname] = useState('');
 
     async function checkForExistingFriendRequest(senderId, receiverId) {
         const firestore = getFirestore();
@@ -114,8 +115,17 @@ export default function MemberProfile({ userId, changeUserToChat}) {
     useEffect(() => {
         const firestore = getFirestore();
         const userDocRef = doc(firestore, "users", userId);
+        const nicknameDocRef = doc(firestore, `servers/${serverId}/nicknames`, userId);
 
-        const unsubscribe = onSnapshot(userDocRef, (userDoc) => {
+        const unsubcribeNickname = onSnapshot(nicknameDocRef, (nicknameDoc) => {
+            if (nicknameDoc.exists()) {
+                setNickname(nicknameDoc.data().nickname);
+            } else {
+                setNickname('');
+            }
+        });
+
+        const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {
                 setUser(userDoc.data());
             } else {
@@ -125,7 +135,10 @@ export default function MemberProfile({ userId, changeUserToChat}) {
             setUser(null);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeUser();
+            unsubcribeNickname();
+        };
     }, [userId]);
 
     if (!user) {
@@ -148,7 +161,7 @@ export default function MemberProfile({ userId, changeUserToChat}) {
                         <AvatarFallback className='border border-serverlistbackground'>{user.avatarname}</AvatarFallback>
                     </Avatar>
                     <div className="text-left">
-                        <p className="text-base font-semibold text-foreground">{user.displayname}</p>
+                        <p className="text-base font-semibold text-foreground">{nickname === '' ? user.displayname : nickname}</p>
                         <p className="text-xs text-gray-400">{user.status}</p>
                     </div>
                 </Button>
@@ -158,7 +171,7 @@ export default function MemberProfile({ userId, changeUserToChat}) {
                     <AvatarFallback className='border border-serverlistbackground text-xl'>{user.avatarname}</AvatarFallback>
                 </Avatar>
                 <div className="text-left">
-                    <p className="text-xl font-semibold text-foreground">{user.displayname}</p>
+                    <p className="text-xl font-semibold text-foreground">{nickname === '' ? user.displayname : nickname}</p>
                     <p className="text-base font-semibold text-foreground">{user.username}</p>
                     <p className="text-xs text-gray-500">{user.status}</p>
                 </div>

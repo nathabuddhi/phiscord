@@ -47,7 +47,7 @@ export default function MemberList({ server, changeUserToChat }) {
                         <Crown className="mr-2" />
                         <h3 className="font-bold">Owner</h3>
                     </div>
-                    <MemberProfile userId={owner.id} key={owner.id} changeUserToChat={changeUserToChat} />
+                    <MemberProfile userId={owner.id} key={owner.id} changeUserToChat={changeUserToChat} serverId={server.id} />
                 </div>
             )}
             {admins.length > 0 && (
@@ -57,7 +57,7 @@ export default function MemberList({ server, changeUserToChat }) {
                         <h3 className="font-bold">Admins</h3>
                     </div>
                     {admins.map(admin => (
-                        <MemberProfile userId={admin.id} key={admin.id} changeUserToChat={changeUserToChat} />
+                        <MemberProfile userId={admin.id} key={admin.id} changeUserToChat={changeUserToChat} serverId={server.id} />
                     ))}
                 </div>
             )}
@@ -68,7 +68,7 @@ export default function MemberList({ server, changeUserToChat }) {
                         <h3 className="font-bold">Members</h3>
                     </div>
                     {regularMembers.map(member => (
-                        <MemberProfile userId={member.id} key={member.id} changeUserToChat={changeUserToChat} />
+                        <MemberProfile userId={member.id} key={member.id} changeUserToChat={changeUserToChat} serverId={server.id} />
                     ))}
                 </div>
             )}

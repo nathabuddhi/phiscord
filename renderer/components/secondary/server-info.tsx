@@ -10,6 +10,7 @@ import { getAuth } from "firebase/auth";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast";
 import { getFirestore, doc, updateDoc, arrayRemove } from "firebase/firestore";
+import ChangeNickname from "@/components/secondary/serversettings/change-nickname";
 
 export default function ServerInfo({ server, changeViewType }) {
     const [infoOpen, setInfoOpen] = useState(false);
@@ -82,6 +83,8 @@ export default function ServerInfo({ server, changeViewType }) {
                 <PopoverContent className="w-[180px] bg-serverlistbackground flex flex-col py-2 px-3">
                     <Label className="text-center mb-3 text-xl">{server ? server.name : "Server Name"}</Label>
                     <Separator />
+                    <ChangeNickname serverId={server.id} />
+                    <Separator />
                     {user && (isOwner(user.uid) || isAdmin(user.uid)) &&
                         <>
                             <ServerSettings server={server} changeViewType={changeViewType} />
@@ -105,7 +108,6 @@ export default function ServerInfo({ server, changeViewType }) {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    
                     {user && !isOwner(user.uid) &&
                         <>
                             <Separator />

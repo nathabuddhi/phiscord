@@ -17,12 +17,14 @@ export default function Message({ message, server, channel }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [blocked, setBlocked] = useState(false);
+    const [nickname, setNickname] = useState('');
 
     useEffect(() => {
         const authUser = getAuth().currentUser;
         const firestore = getFirestore();
         const authorDocRef = doc(firestore, "users", message.userId);
         const userDocRef = doc(firestore, "users", authUser.uid);
+        const nicknameDocRef = doc(firestore, `servers/${server.id}/nicknames`, message.userId);
 
         const unsubscribeAuthor = onSnapshot(authorDocRef, (authorDoc) => {
             if (authorDoc.exists()) {
@@ -40,9 +42,18 @@ export default function Message({ message, server, channel }) {
             }
         });
 
+        const unsubcribeNickname = onSnapshot(nicknameDocRef, (nicknameDoc) => {
+            if (nicknameDoc.exists()) {
+                setNickname(nicknameDoc.data().nickname);
+            } else {
+                setNickname('');
+            }
+        });
+
         return () => {
             unsubscribeAuthor();
             unsubscribeUser();
+            unsubcribeNickname();
         };
     }, [message.userId]);
 
@@ -109,7 +120,7 @@ export default function Message({ message, server, channel }) {
                     <div className="ml-2 flex flex-col">
                         <div className="flex flex-row items-center">
                             <p className={"text-base mr-2"}>
-                                {author.displayname}
+                                {nickname === '' ? author.displayname : nickname}
                             </p>
                             <p className="text-xs text-gray-400">{new Date(message.timestamp?.toDate()).toLocaleString()}</p>
                         </div>

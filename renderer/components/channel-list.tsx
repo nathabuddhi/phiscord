@@ -138,7 +138,7 @@ export default function ChannelList({ server, selectTextChannel, changeViewType,
                                         </HoverCardContent>}
                                     </HoverCard>
                                     {vchannel.joined.map((userid) => (
-                                        <CallJoined key={userid} userId={userid} />
+                                        <CallJoined key={userid} userId={userid} serverId={server.id} />
                                     ))}
                                 </>
                             ))}
