@@ -12,9 +12,10 @@ import FriendChatBox from '@/components/friend-chat-box';
 import CallInfo from '@/components/call-info';
 import CallBox from '@/components/call-box';
 import { getAuth } from 'firebase/auth';
-import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, collection, deleteDoc, onSnapshot, addDoc } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
 import FriendCallBox from '@/components/friend-call-box';
+import { ToastAction } from "@/components/ui/toast";
 
 const HomePage = ({ userDetails }) => {
     const [isViewingServer, setIsViewingServer] = useState(false);
@@ -34,6 +35,9 @@ const HomePage = ({ userDetails }) => {
     const [remoteTracks, setRemoteTracks] = useState([]);
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
     const [localAudioTrack, setLocalAudioTrack] = useState(null);
+    const [directCall, setDirectCall] = useState('');
+
+    const firestore = getFirestore();
 
     const clientRef = useRef(null);
     const APP_ID = "0403f6945a0d406c9efa7cb00f5c7aca";
@@ -58,7 +62,6 @@ const HomePage = ({ userDetails }) => {
     };
 
     const changeUserToChat = async (userToChatId) => {
-        const firestore = getFirestore();
         const tempUser = getAuth().currentUser;
         const userDocRef = doc(firestore, "users", tempUser.uid);
         const userDoc = await getDoc(userDocRef);
@@ -168,8 +171,23 @@ const HomePage = ({ userDetails }) => {
         setIsViewingCall((prevState) => !prevState);
     };
 
+    const addJoinedUser = async (dmID, userId) => {
+        const dmDocRef = doc(firestore, 'directmessages/', dmID);
+
+        await updateDoc(dmDocRef, {
+            joined: arrayUnion(userId),
+        });
+    }
+
+    const removeJoinedUser = async (dmID, userId) => {
+        const dmDocRef = doc(firestore, 'directmessages/', dmID);
+
+        await updateDoc(dmDocRef, {
+            joined: arrayRemove(userId),
+        })
+    }
+
     const addJoinedMember = async (serverId, channelId, userId) => {
-        const firestore = getFirestore();
         const channelDocRef = doc(firestore, `servers/${serverId}/voicechannels`, channelId);
 
         await updateDoc(channelDocRef, {
@@ -178,7 +196,6 @@ const HomePage = ({ userDetails }) => {
     }
 
     const removeJoinedMember = async (serverId, channelId, userId) => {
-        const firestore = getFirestore();
         const channelDocRef = doc(firestore, `servers/${serverId}/voicechannels`, channelId);
 
         await updateDoc(channelDocRef, {
@@ -245,6 +262,22 @@ const HomePage = ({ userDetails }) => {
                 setIsViewingCall(true);
                 if(type === 'channel')
                     addJoinedMember(server.id, channel.id, userDetails.id);
+                else {
+                    addJoinedUser(directMessageID, userDetails.id);
+                    setDirectCall(directMessageID);
+                    const dmDocRef = doc(firestore, 'directmessages/', directMessageID);
+                    const dmDoc = await getDoc(dmDocRef);
+                    if(dmDoc.exists()) {
+                        if(!dmDoc.data().joined.includes(userToCall.id)) {
+                            const addNotificationDocRef = collection(firestore, `users/${userToCall.id}/toastNotifications`);
+                            await addDoc(addNotificationDocRef, {
+                                title: "Incoming Call",
+                                description: `${userDetails.username} is currently calling you.`,
+                                senderId: userDetails.id,
+                            });
+                        }
+                    }
+                }
             } catch (error) {
                 toast({
                     variant: "destructive",
@@ -292,7 +325,6 @@ const HomePage = ({ userDetails }) => {
         setIsViewingCall(false);
         setIsInCall(false);
         setIsVideoOn(false);
-        setUserToCall(null);
         setLocalAudioTrack(null);
         setLocalVideoTrack(null);
 
@@ -300,6 +332,10 @@ const HomePage = ({ userDetails }) => {
             removeJoinedMember(serverCall.id, channelCall.id, userDetails.id);
             setServerCall(null);
             setChannelCall(null);
+        } else {
+            removeJoinedUser(directCall, userDetails.id)
+            setUserToCall(null);
+            setDirectCall('');
         }
 
         if (localAudioTrack)
@@ -312,6 +348,29 @@ const HomePage = ({ userDetails }) => {
 
         setRemoteTracks([]);
     };
+
+    const toastNotificationListener = () => {
+        const notificationsCollectionRef = collection(firestore, `users/${userDetails.id}/toastNotifications`);
+    
+        onSnapshot(notificationsCollectionRef, (snapshot) => {
+            snapshot.docChanges().forEach(async (change) => {
+                if (change.type === "added") {
+                    const data = change.doc.data();
+                    toast({
+                        duration: 30000,
+                        title: data.title,
+                        description: data.description,
+                        action: <ToastAction altText='Login' onClick={() => changeUserToChat(data.senderId)}>Jump</ToastAction>
+                    });
+                    await deleteDoc(change.doc.ref);
+                }
+            });
+        });
+    };
+
+    useEffect(() => {
+        toastNotificationListener();
+    }, []);
 
     return (
         <>

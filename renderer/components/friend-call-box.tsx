@@ -7,7 +7,6 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.warn(remoteUserId);
         if(!localUser || !remoteUserId)
             return;
 
