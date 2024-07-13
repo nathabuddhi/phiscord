@@ -3,8 +3,11 @@ import {
   BrowserWindow,
   BrowserWindowConstructorOptions,
   Rectangle,
+  nativeImage,
+  ipcMain
 } from 'electron'
 import Store from 'electron-store'
+import path from 'path'
 
 export const createWindow = (
   windowName: string,
@@ -79,6 +82,56 @@ export const createWindow = (
       ...options.webPreferences,
     },
   })
+
+  const speakerOnIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/speaker-on.png'));
+  const speakerOffIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/speaker-off.png'));
+  const micOnIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/mic-on.png'));
+  const micOffIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/mic-off.png'));
+  const videoOnIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/video-on.png'));
+  const videoOffIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/video-off.png'));
+  const leaveCallIcon = nativeImage.createFromPath(path.join(__dirname, 'assets/leave-call.png'));
+
+  function updateThumbarButtons(isInCall, isMicOn, isDeafened, isVideoOn) {
+    if (!isInCall) {
+      win.setThumbarButtons([]);
+    } else {
+      win.setThumbarButtons([
+        {
+          tooltip: isMicOn ? 'Mute' : 'Unmute',
+          icon: isMicOn ? micOnIcon : micOffIcon,
+          click() {
+            win.webContents.send('toggle-mic');
+          },
+        },
+        {
+          tooltip: isDeafened ? 'Undeafen' : 'Deafen',
+          icon: isDeafened ? speakerOffIcon : speakerOnIcon,
+          click() {
+            win.webContents.send('toggle-deafen');
+          },
+        },
+        {
+          tooltip: isVideoOn ? 'Stop Video' : 'Start Video',
+          icon: isVideoOn ? videoOnIcon : videoOffIcon,
+          click() {
+            win.webContents.send('toggle-video');
+          },
+        },
+        {
+          tooltip: 'Leave Call',
+          icon: leaveCallIcon,
+          click() {
+            win.webContents.send('leave-call');
+          },
+        },
+      ]);
+    }
+  }
+
+  ipcMain.on('update-thumbar-buttons', (event, data) => {
+    const { isInCall, isMicOn, isDeafened, isVideoOn } = data;
+    updateThumbarButtons(isInCall, isMicOn, isDeafened, isVideoOn);
+  });
 
   win.on('close', saveState)
 
