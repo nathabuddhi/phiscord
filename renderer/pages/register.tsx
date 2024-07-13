@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import Head from "next/head";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { setDoc, doc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import guestMiddleware from '@/components/middleware/guest-middleware';
@@ -46,17 +46,13 @@ const formSchema = z.object({
 
 function RegisterPage() {
     const { toast } = useToast();
-
-    const checkUsername = async (username) => {
-        const usersCollectionRef = collection(db, "users");
-        const docRef = query(usersCollectionRef, where("username", "==", username));
     
-        const querySnapshot = await getDocs(docRef);
-        if (querySnapshot.empty)
-            return true;
-        else
-            return false;
-    }
+    const usernameTaken = async (username) => {
+        const usersCollectionRef = collection(db, "users");
+        const usernameQuery = query(usersCollectionRef, where("username", "==", username));
+        const querySnapshot = await getDocs(usernameQuery);
+        return !querySnapshot.empty;
+    };
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -69,7 +65,7 @@ function RegisterPage() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            if(checkUsername(values.username)) {
+            if(await usernameTaken(values.username)) {
                 toast({
                     variant: "destructive",
                     title: "Username taken!",

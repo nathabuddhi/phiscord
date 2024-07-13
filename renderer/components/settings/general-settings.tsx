@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { auth, db } from "@/components/firebase";
 import Link from "next/link";
 
@@ -46,7 +46,28 @@ export default function GeneralSettings({ userDetails }) {
         },
     })
 
+    const usernameTaken = async (username) => {
+        const usersCollectionRef = collection(db, "users");
+        const usernameQuery = query(usersCollectionRef, where("username", "==", username));
+        const querySnapshot = await getDocs(usernameQuery);
+        if(!querySnapshot.empty && querySnapshot.docs[0].id !== userDetails.id) {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
     async function onGeneralSubmit(data: z.infer<typeof generalFormSchema>) {
+        if(await usernameTaken(data.username)) {
+            toast({
+                variant: "destructive",
+                title: "Username taken!",
+                description: "The username you typed is already taken. Please try another username."
+            });
+            generalForm.resetField('username');
+            return;
+        }
+
         try {
             const userDocRef = doc(db, "users", userDetails.id);
             await setDoc(userDocRef, {
