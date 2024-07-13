@@ -10,7 +10,7 @@ export default function SiteHeader() {
                 <div className="mr-4 flex">
                     <Link href="/main" className="mr-6 flex items-center space-x-2">
                         <Image
-                                className="ml-auto mr-auto ml-10"
+                                className="mr-auto ml-10"
                                 src="/images/logofull.svg"
                                 alt="Logo image"
                                 width={140}

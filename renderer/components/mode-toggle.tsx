@@ -26,7 +26,7 @@ export default function ModeToggle() {
                     theme === "dark" ? "rotate-0 scale-100" : "rotate-90 scale-0"
                 }`}
             />
-            <span className="sr-only">Toggle theme</span>
+            {/* <span className="sr-only">Toggle theme</span> */}
         </Button>
     );
 }

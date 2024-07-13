@@ -8,8 +8,7 @@ export default function Loading() {
         "If you think you're a good dev, you should meet LC118 first.",
         "LC118 is the best dev.",
         "Shoutout to Inside of Motion for the loading gif!",
-        "Hopefully I become NB24-2... or just 24-2 for that matter.",
-        "If the loading is taking too long, blame your device, not me.",
+        "If the loading is taking too long, blame your device, not the app.",
         "Idk what else to put here",
         "Shoutout to Inside of Motion for the loading gif!",
       ];
