@@ -100,13 +100,47 @@ const HomePage = ({ userDetails }) => {
                 localVideoTrack.setEnabled(true);
                 localVideoTrack.play(`local-${userDetails.id}`);
             }
-            setIsVideoOn((prevState) => !prevState);
+            setIsVideoOn(prevState => !prevState);
+        } else {
+            try {
+                const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+                const agoraClient = clientRef.current;
+                const videoTrack = await AgoraRTC.createCameraVideoTrack();
+                setLocalVideoTrack(videoTrack);
+                agoraClient.publish(videoTrack);
+    
+                videoTrack.setEnabled(true);
+                videoTrack.play(`local-${userDetails.id}`);
+    
+                setIsVideoOn(true);
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "An error occurred while trying to toggle the video: " + error.message,
+                });
+            }
         }
     };
+    
 
     const toggleMic = async() => {
         if (localAudioTrack) {
             localAudioTrack.setEnabled(!isMicOn);
+        } else if(isInCall) {
+            try {
+                const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
+                const agoraClient = clientRef.current;
+                const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                await agoraClient.publish(audioTrack);
+                setLocalAudioTrack(audioTrack);
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "An error occurred while trying to toggle the microphone: " + error.message,
+                })
+            }
         }
         if(isDeafened && !isMicOn) {
             toggleDeafened();
@@ -197,14 +231,11 @@ const HomePage = ({ userDetails }) => {
 
                 await agoraClient.join(APP_ID, agoraChannelName, null, userDetails.id);
 
-                setIsVideoOn(true);
-                setIsMicOn(true);
-                const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                const videoTrack = await AgoraRTC.createCameraVideoTrack();
-                setLocalAudioTrack(audioTrack);
-                setLocalVideoTrack(videoTrack);
-                await agoraClient.publish([audioTrack, videoTrack]);
-                setRemoteTracks((prevUsers) => [...prevUsers, { id: userDetails.id, audioTrack, videoTrack }]);
+                if(isMicOn) {
+                    const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    await agoraClient.publish(audioTrack);
+                    setLocalAudioTrack(audioTrack);
+                }
 
                 agoraClient.on("user-published", handleUserPublished);
                 agoraClient.on("user-unpublished", handleUserUnpublished);
@@ -237,6 +268,8 @@ const HomePage = ({ userDetails }) => {
 
             if (mediaType === "audio") {
                 user.audioTrack.play();
+                if(isDeafened)
+                    user.audioTrack.setVolume(0);
             }
         }
     };
@@ -260,6 +293,8 @@ const HomePage = ({ userDetails }) => {
         setIsInCall(false);
         setIsVideoOn(false);
         setUserToCall(null);
+        setLocalAudioTrack(null);
+        setLocalVideoTrack(null);
 
         if(serverCall && channelCall) {
             removeJoinedMember(serverCall.id, channelCall.id, userDetails.id);
