@@ -68,7 +68,7 @@ export default function NotificationsBar() {
                         <DialogTitle>Notifications</DialogTitle>
                     </DialogHeader>
                     <DialogDescription>
-                        <ScrollArea className="h-96">
+                        <ScrollArea className="max-h-96">
                             {notifications.length === 0 && "You have no unread notifications."}
                             {notifications.map((notif) => (
                                 <>

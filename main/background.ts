@@ -15,12 +15,13 @@ if (isProd) {
   await app.whenReady();
 
   const mainWindow = createWindow('main', {
-    width: 1000,
-    height: 600,
+    width: 1400,
+    height: 900,
     icon: path.join(__dirname, 'assets/app-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
+    
   });
 
   if (isProd) {
@@ -103,28 +104,15 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-const iconPath = path.join(__dirname, 'assets/app-icon.ico');
-
-app.setUserTasks([
-  // {
-  //   program: process.execPath,
-  //   arguments: '--new-window',
-  //   iconPath: iconPath,
-  //   iconIndex: 0,
-  //   title: 'Test',
-  //   description: 'Create a new window'
-  // }
-])
-
-app.setJumpList([])
+const appIconPath = path.join(__dirname, 'assets/app-icon.ico');
 
 app.setUserTasks([
   {
     program: process.execPath,
     arguments: '--new-window',
-    iconPath: iconPath,
+    iconPath: appIconPath,
     iconIndex: 0,
     title: 'PHiscord',
-    description: 'Technical Test for LC118'
-  }
+    description: 'New Window'
+  },
 ]);

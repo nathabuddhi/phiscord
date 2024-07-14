@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { getFirestore, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import SearchConversation from "@/components/secondary/search-conversation";
 
 export default function FriendList({ changeViewType, changeUserToChat, isInCall }) {
     const [user, setUser] = useState(null);
@@ -43,13 +44,14 @@ export default function FriendList({ changeViewType, changeUserToChat, isInCall 
         <>
             <div>
                 <ScrollArea className={`${ isInCall ? "h-[calc(100vh-150px)]" : "h-[calc(100vh-50px)]"} w-[200px] bg-darkerbackground px-4 flex flex-col rounded-tr-[5px] pt-4`}>
+                    <SearchConversation changeUserToChat={changeUserToChat} userDetails={user} />
                     <Button variant="ghost" className="w-full" onClick={() => changeViewType(2)}>Friends</Button>
                     <AddFriend />
                     <Separator />
                     {userMessages.length > 0 && userMessages.map((messageUser) => (
                         <Button className="w-full justify-normal p-2 m-2" key={messageUser.id} variant="ghost" onClick={async () => {await changeUserToChat(messageUser.id); changeViewType(3);}}>
                             <Avatar className="mr-2">
-                                <AvatarFallback>{messageUser.avatarname}</AvatarFallback>
+                                <AvatarFallback>{messageUser ? messageUser.avatarname : "??"}</AvatarFallback>
                             </Avatar>
                             {messageUser.username}
                         </Button>
