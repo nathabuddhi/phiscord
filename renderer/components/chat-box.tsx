@@ -1,6 +1,6 @@
 import { Hash, SmilePlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
 import Message from "@/components/secondary/messaging/message";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,6 +24,12 @@ export default function ChatBox({ channel, server }) {
     const [searchMessage, setSearchMessage] = useState("");
 
     const filter = new Filter();
+
+    const chatBoxBottom = useRef(null)
+
+    useEffect(() => {
+        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages]);
 
     useEffect(() => {
         if (!server || !channel) return;
@@ -112,6 +118,7 @@ export default function ChatBox({ channel, server }) {
                 {messages.length <= 0 && (
                     <p className="text-xl italic text-center mt-[calc(87vh/2)]">No messages yet. Send one now to spice things up a bit!</p>
                 )}
+                <div ref={chatBoxBottom} />
             </ScrollArea>
             <div className="m-[10px] flex relative">
                 <UploadFile server={server} channel={channel} />

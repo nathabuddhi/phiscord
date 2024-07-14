@@ -1,6 +1,6 @@
 import { Hash, SmilePlus, Search, PhoneCall } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc } from "firebase/firestore";
 import DirectMessage from "@/components/secondary/messaging/dm-message";
 import { useToast } from "@/components/ui/use-toast";
@@ -28,6 +28,12 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const [loading, setLoading] = useState(true);
 
     const filter = new Filter();
+
+    const chatBoxBottom = useRef(null)
+
+    useEffect(() => {
+        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages]);
 
     useEffect(() => {
         const tempUser = getAuth().currentUser;
@@ -232,6 +238,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 {messages.length <= 0 && (
                     <p className="text-xl italic text-center mt-[calc(87vh/2)]">No messages yet. Send one now to spice things up a bit!</p>
                 )}
+                <div ref={chatBoxBottom} />
             </ScrollArea>
             <div className="m-[10px] flex relative">
                 <UploadDMFile dmID={directMessageId} receiverID={toChatUser.id} />
