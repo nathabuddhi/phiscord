@@ -409,6 +409,10 @@ const HomePage = ({ userDetails }) => {
         window.ipc.send('update-tray', {isMicOn, isDeafened});
     }, [isMicOn, isDeafened]);
 
+    useEffect(() => {
+        window.ipc.send('update-jumplist', {isInCall});
+    }, [isInCall])
+
     return (
         <>
             <Head>

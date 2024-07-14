@@ -98,6 +98,12 @@ if (isProd) {
   });
   
   mainWindow.once('focus', () => mainWindow.flashFrame(false))
+
+  const args = process.argv.slice(1);
+  if (args.includes('--nothing')) {
+    console.error('nothing lololol');
+    return;
+  }
 })();
 
 app.on('window-all-closed', () => {
@@ -106,13 +112,61 @@ app.on('window-all-closed', () => {
 
 const appIconPath = path.join(__dirname, 'assets/app-icon.ico');
 
+const defaultUserTask = {
+  program: null,
+  arguments: '',
+  iconPath: appIconPath,
+  iconIndex: 0,
+  title: 'PHiscord',
+  description: 'New Window'
+}
+
+const toggleMuteUserTask = {
+  program: null,
+  arguments: '',
+  iconPath: appIconPath,
+  iconIndex: 0,
+  title: 'Toggle Mic',
+  description: 'Toggles your mic.'
+}
+
+const toggleDeafenUserTask = {
+  program: null,
+  arguments: '',
+  iconPath: appIconPath,
+  iconIndex: 0,
+  title: 'Toggle Deafen',
+  description: 'Toggles whether you are deafened or not.'
+}
+
+const leaveCallUserTask = {
+  program: null,
+  arguments: '',
+  iconPath: appIconPath,
+  iconIndex: 0,
+  title: 'Leave Call',
+  description: 'Leave your current call.'
+}
+
 app.setUserTasks([
-  {
-    program: process.execPath,
-    arguments: '--new-window',
-    iconPath: appIconPath,
-    iconIndex: 0,
-    title: 'PHiscord',
-    description: 'New Window'
-  },
+  defaultUserTask
 ]);
+
+ipcMain.on('update-jumplist', (event, data) => {
+  const { isInCall } = data;
+
+  if(isInCall) {
+    app.setUserTasks([
+      defaultUserTask,
+      toggleMuteUserTask,
+      toggleDeafenUserTask,
+      leaveCallUserTask
+    ]);
+  } else {
+    app.setUserTasks([
+      defaultUserTask,
+      toggleMuteUserTask,
+      toggleDeafenUserTask,
+    ]);
+  }
+})
