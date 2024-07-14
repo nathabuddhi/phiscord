@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "phiscord",
+  "productName": "PHiscord",
   "description": "TechTest LC118",
   "version": "1.0.0",
   "author": "Template by Yoshihide Shiono <shiono.yoshihide@gmail.com>. PHiscord by LC118.",

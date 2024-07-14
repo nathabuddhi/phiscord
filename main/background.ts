@@ -106,15 +106,25 @@ app.on('window-all-closed', () => {
 const iconPath = path.join(__dirname, 'assets/app-icon.ico');
 
 app.setUserTasks([
+  // {
+  //   program: process.execPath,
+  //   arguments: '--new-window',
+  //   iconPath: iconPath,
+  //   iconIndex: 0,
+  //   title: 'Test',
+  //   description: 'Create a new window'
+  // }
+])
+
+app.setJumpList([])
+
+app.setUserTasks([
   {
     program: process.execPath,
     arguments: '--new-window',
     iconPath: iconPath,
     iconIndex: 0,
-    title: 'Test',
-    description: 'Create a new window'
+    title: 'PHiscord',
+    description: 'Technical Test for LC118'
   }
-])
-
-app.setJumpList([])
-
+]);
