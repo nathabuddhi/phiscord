@@ -133,7 +133,7 @@ export default function Message({ message, server, channel }) {
                                 <div className='mt-2'>
                                     <Button className="w-auto">
                                         <Link href={message.content} rel="noopener noreferrer">
-                                            Download Image ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
+                                            View Original ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
                                         </Link>
                                     </Button>
                                 </div>

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import { getAuth } from "firebase/auth";
 
@@ -16,10 +16,48 @@ export default function UploadFile({ dmID, receiverID }) {
     const user = auth.currentUser;
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [currUser, setCurrUser] = useState(null);
+    const [toChatUser, setToChatUser] = useState(null);
 
     const changeFile = (e) => {
         setFile(e.target.files[0]);
     };
+
+    useEffect(() => {
+        const tempUser = getAuth().currentUser;
+
+        const userDocRef = doc(firestore, "users", tempUser.uid);
+        const toChatDocRef = doc(firestore, "users", receiverID);
+
+        const unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setCurrUser(snapshot.data());
+            }
+        }, (error) => {
+            toast({
+                variant: "destructive",
+                title: "Uh oh. Something went wrong.",
+                description: "Failed to fetch user data: " + error.message
+            });
+        });
+
+        const unsubscribeUserToChat = onSnapshot(toChatDocRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setToChatUser(snapshot.data());
+            }
+        }, (error) => {
+            toast({
+                variant: "destructive",
+                title: "Uh oh. Something went wrong.",
+                description: "Failed to fetch user data: " + error.message
+            });
+        });
+
+        return () => {
+            unsubscribeUser();
+            unsubscribeUserToChat();
+        };
+    }, [receiverID]);
 
     const uploadFile = async () => {
         if (!file) {
@@ -31,6 +69,35 @@ export default function UploadFile({ dmID, receiverID }) {
             return;
         }
 
+        if(toChatUser.blocked.includes(currUser.id)) {
+            toast({
+                variant: "destructive",
+                title: "Blocked.",
+                description: "You cannot send messages to this user because you have been blocked."
+            });
+            return;
+        } else if(currUser.blocked.includes(toChatUser.id)) {
+            toast({
+                variant: "destructive",
+                title: "Blocked",
+                description: "You cannot send messages to users you have blocked."
+            });
+            return;
+        } else if(!toChatUser.friends.includes(currUser.id) && !toChatUser.randomMessage) {
+            toast({
+                variant: "destructive",
+                title: "Not friends",
+                description: "You cannot send messages to this user because you are not friends and this user is not accepting messages from non-friends."
+            });
+            return;
+        }  else if(!toChatUser.messages.includes(currUser.id)) {
+            const receiverDocRef = doc(firestore, "users", toChatUser.id);
+
+            await updateDoc(receiverDocRef, {
+                messages: arrayUnion(currUser.id)
+            });
+        }
+
         toast({
             title: "Uploading file.",
             description: "Please wait while we upload your file.",
@@ -39,6 +106,13 @@ export default function UploadFile({ dmID, receiverID }) {
         const fileType = file.type.startsWith("image/") ? "image" : "file";
         const storageRef = ref(storage, `uploads/${dmID}/${file.name}`);
         try {
+            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            await addDoc(addNotificationDocRef, {
+                title: "New Message",
+                description: `${currUser.username} sent you a file`,
+                senderId: currUser.id,
+                duration: 3000,
+            });
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
             const messagesRef = collection(firestore, `directmessages/${dmID}/messages`);

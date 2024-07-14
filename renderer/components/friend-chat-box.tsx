@@ -159,6 +159,13 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         }
 
         try {
+            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            await addDoc(addNotificationDocRef, {
+                title: "New Message",
+                description: `${currUser.username} sent you a direct message.`,
+                senderId: currUser.id,
+                duration: 3000,
+            });
             const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
             await addDoc(messagesRef, {
                 content: content,

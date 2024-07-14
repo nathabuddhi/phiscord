@@ -275,6 +275,7 @@ const HomePage = ({ userDetails }) => {
                                 title: "Incoming Call",
                                 description: `${userDetails.username} is currently calling you.`,
                                 senderId: userDetails.id,
+                                duration: 15000,
                             });
                         }
                     }
@@ -357,13 +358,15 @@ const HomePage = ({ userDetails }) => {
             snapshot.docChanges().forEach(async (change) => {
                 if (change.type === "added") {
                     const data = change.doc.data();
+                    setTimeout(data.duration+500);
                     toast({
-                        duration: 30000,
+                        duration: data.duration,
                         title: data.title,
                         description: data.description,
                         action: <ToastAction altText='Login' onClick={() => changeUserToChat(data.senderId)}>Jump</ToastAction>
-                    });
+                    })
                     await deleteDoc(change.doc.ref);
+                    window.ipc.send('notification-received', {});
                 }
             });
         });

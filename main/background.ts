@@ -50,14 +50,17 @@ if (isProd) {
 
   tray.setToolTip('PHiscord');
   tray.setContextMenu(contextMenu);
+
+  ipcMain.on('notification-received', (event, data) => {
+    if(!mainWindow.isFocused())
+      mainWindow.flashFrame(true);
+  });
+  
+  mainWindow.once('focus', () => mainWindow.flashFrame(false))
 })();
 
 app.on('window-all-closed', () => {
   app.quit();
-});
-
-ipcMain.on('message', async (event, arg) => {
-  event.reply('message', `${arg} World!`);
 });
 
 const iconPath = path.join(__dirname, 'assets/app-icon.ico');
@@ -72,3 +75,4 @@ app.setUserTasks([
     description: 'Create a new window'
   }
 ])
+

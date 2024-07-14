@@ -7,6 +7,7 @@ import { getAuth } from "firebase/auth";
 import { useToast } from "@/components/ui/use-toast";
 import NotificationInfo from "@/components/secondary/tertiary/notification-info";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function NotificationsBar() {
     const { toast } = useToast();
@@ -67,13 +68,15 @@ export default function NotificationsBar() {
                         <DialogTitle>Notifications</DialogTitle>
                     </DialogHeader>
                     <DialogDescription>
-                        {notifications.length === 0 && "You have no unread notifications."}
-                        {notifications.map((notif) => (
-                            <>
-                                <NotificationInfo key={notif.id} notification={notif} user={auth.currentUser} />
-                                <Separator className="bg-darkerbackground" />
-                            </>
-                        ))}
+                        <ScrollArea className="h-96">
+                            {notifications.length === 0 && "You have no unread notifications."}
+                            {notifications.map((notif) => (
+                                <>
+                                    <NotificationInfo key={notif.id} notification={notif} user={auth.currentUser} />
+                                    <Separator className="bg-darkerbackground" />
+                                </>
+                            ))}
+                        </ScrollArea>
                     </DialogDescription>
                     <DialogFooter>
                         {notifications.length > 0 && <Button onClick={deleteAllNotifs}>Remove All</Button>}
