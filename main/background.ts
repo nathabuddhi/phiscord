@@ -33,7 +33,7 @@ if (isProd) {
 
   let tray = new Tray(path.join(__dirname, 'assets/app-icon.png'));
 
-  const contextMenu = Menu.buildFromTemplate([
+  const defaultContextMenu = Menu.buildFromTemplate([
     {
       label: 'Open App',
       click: () => {
@@ -45,11 +45,51 @@ if (isProd) {
       click: () => {
         app.quit();
       }
-    }
+    },
   ]);
 
+  tray.setContextMenu(defaultContextMenu);
+
+  function updateTray(isMicOn, isDeafened) {
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Open App',
+        click: () => {
+          mainWindow.show();
+        }
+      },
+      {
+        label: 'Mute',
+        type: 'checkbox',
+        checked: !isMicOn,
+        click: () => {
+          mainWindow.webContents.send('toggle-mic');
+        }
+      },
+      {
+        label: 'Deafen',
+        type: 'checkbox',
+        checked: isDeafened,
+        click: () => {
+          mainWindow.webContents.send('toggle-deafen');
+        }
+      },
+      {
+        label: 'Quit',
+        click: () => {
+          app.quit();
+        }
+      },
+    ]);
+    tray.setContextMenu(contextMenu);
+  }
+
+  ipcMain.on('update-tray', (event, data) => {
+    const { isMicOn, isDeafened } = data;
+    updateTray(isMicOn, isDeafened);
+  });
+
   tray.setToolTip('PHiscord');
-  tray.setContextMenu(contextMenu);
 
   ipcMain.on('notification-received', (event, data) => {
     if(!mainWindow.isFocused())
@@ -75,4 +115,6 @@ app.setUserTasks([
     description: 'Create a new window'
   }
 ])
+
+app.setJumpList([])
 

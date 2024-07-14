@@ -405,6 +405,10 @@ const HomePage = ({ userDetails }) => {
         window.ipc.send('update-thumbar-buttons', {isInCall, isMicOn, isDeafened, isVideoOn});
     }, [isInCall, isMicOn, isDeafened, isVideoOn]);
 
+    useEffect(() => {
+        window.ipc.send('update-tray', {isMicOn, isDeafened});
+    }, [isMicOn, isDeafened]);
+
     return (
         <>
             <Head>
