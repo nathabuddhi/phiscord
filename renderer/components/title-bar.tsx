@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import styles from '@/styles/titlebar.module.scss'
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize, Minimize, X } from 'lucide-react';
 
@@ -36,7 +35,7 @@ export default function TitleBar() {
             removeMaximizedListener();
             removeUnMaximizedListener();
         };
-    })
+    }, [])
 
     return (
         <div className="title-bar flex flex-row bg-serverlistbackground justify-between items-center px-3 h-[40px]">
