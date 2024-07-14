@@ -40,38 +40,8 @@ const HomePage = ({ userDetails }) => {
     const firestore = getFirestore();
 
     const clientRef = useRef(null);
-    const localAudioTrackRef = useRef(null);
-    const localVideoTrackRef = useRef(null);
-    const isInCallRef = useRef(isInCall);
-    const isMicOnRef = useRef(isMicOn);
-    const isDeafenedRef = useRef(isDeafened);
-    const isVideoOnRef = useRef(isVideoOn);
 
     const APP_ID = "0403f6945a0d406c9efa7cb00f5c7aca";
-
-    useEffect(() => {
-        isInCallRef.current = isInCall;
-    }, [isInCall]);
-
-    useEffect(() => {
-        isMicOnRef.current = isMicOn;
-    }, [isMicOn]);
-
-    useEffect(() => {
-        isDeafenedRef.current = isDeafened;
-    }, [isDeafened]);
-
-    useEffect(() => {
-        isVideoOnRef.current = isVideoOn;
-    }, [isVideoOn]);
-
-    useEffect(() => {
-        localVideoTrackRef.current = localVideoTrack;
-    }, [localVideoTrack]);
-
-    useEffect(() => {
-        localAudioTrackRef.current = localAudioTrack;
-    }, [localAudioTrack]);
 
     const selectTextChannel = (selectedChannel) => {
         setChannel(selectedChannel);
@@ -142,7 +112,6 @@ const HomePage = ({ userDetails }) => {
                 const videoTrack = await AgoraRTC.createCameraVideoTrack();
                 agoraClient.publish(videoTrack);
                 setLocalVideoTrack(videoTrack);
-                localVideoTrackRef.current = videoTrack;
     
                 videoTrack.setEnabled(true);
                 videoTrack.play(`local-${userDetails.id}`);
@@ -160,16 +129,15 @@ const HomePage = ({ userDetails }) => {
     
 
     const toggleMic = async() => {
-        if (localAudioTrackRef.current) {
-            localAudioTrackRef.current.setEnabled(!isMicOn);
-        } else if(isInCallRef.current) {
+        if (localAudioTrack) {
+            localAudioTrack.setEnabled(!isMicOn);
+        } else if(isInCall) {
             try {
                 const AgoraRTC = await import("agora-rtc-sdk-ng").then((mod) => mod.default);
                 const agoraClient = clientRef.current;
                 const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
                 await agoraClient.publish(audioTrack);
                 setLocalAudioTrack(audioTrack);
-                localAudioTrackRef.current = audioTrack;
             } catch (error) {
                 toast({
                     variant: "destructive",
@@ -285,7 +253,6 @@ const HomePage = ({ userDetails }) => {
                     const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
                     await agoraClient.publish(audioTrack);
                     setLocalAudioTrack(audioTrack);
-                    localAudioTrackRef.current = audioTrack;
                 }
 
                 agoraClient.on("user-published", handleUserPublished);
@@ -372,8 +339,8 @@ const HomePage = ({ userDetails }) => {
             removeJoinedUser(directCall, userDetails.id)
         }
 
-        if (localAudioTrackRef.current)
-            localAudioTrackRef.current.close();
+        if (localAudioTrack)
+            localAudioTrack.close();
         if (localVideoTrack)
             localVideoTrack.close();
         const client = clientRef.current;
@@ -429,7 +396,7 @@ const HomePage = ({ userDetails }) => {
             removeVideoListener();
             removeLeaveCallListener();
         };
-    }, []);
+    }, [isInCall, isMicOn, isDeafened, isVideoOn, localAudioTrack, localVideoTrack]);
     
     useEffect(() => {
         window.ipc.send('update-thumbar-buttons', {isInCall, isMicOn, isDeafened, isVideoOn});
