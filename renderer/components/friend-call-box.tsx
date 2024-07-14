@@ -60,7 +60,7 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
 
     return (
         <>
-            <div className="w-full h-100vh bg-background flex justify-center items-center overflow-hidden">
+            <div className="w-full h-[calc(100vh-40px)] bg-background flex justify-center items-center overflow-hidden">
                 <div key={remoteUserId} className='w-[300px] h-[250px] bg-darkerbackground rounded-[15px] m-2 p-2 flex flex-col justify-center items-center'>
                     <div className="rounded-[10px] video-container w-full h-full flex justify-center items-center">
                         <div id={`remote-${remoteUserId}`} className='w-[280px] h-[200px] border-serverlistbackground border-solid border-2 rounded-[5px]' />

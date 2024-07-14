@@ -74,7 +74,7 @@ export default function CallBox({ localUser, serverId, channelId, localVideoTrac
     }, [remoteTracks]);
 
     return (
-        <div className="w-full h-100vh bg-background flex justify-center items-center overflow-hidden">
+        <div className="w-full h-[calc(100vh-40px)] bg-background flex justify-center items-center overflow-hidden">
             {users.map((user) => (
                 user.id !== localUser.id &&
                 <div key={user.id} className='w-[300px] h-[250px] bg-darkerbackground rounded-[15px] m-2 p-2 flex flex-col justify-center items-center'>

@@ -4,6 +4,7 @@ import type { AppProps } from "next/app";
 import "../styles/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import TitleBar from "@/components/title-bar";
 
 function MyApp({ Component, pageProps }: AppProps) {
     return (
@@ -13,6 +14,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             enableSystem={false}
             disableTransitionOnChange
         >
+            <TitleBar />
             <Component {...pageProps} />
             <Toaster />
         </ThemeProvider>

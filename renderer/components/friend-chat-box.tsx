@@ -206,7 +206,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         return null
 
     return (
-        <div className="w-[calc(100vw-280px)] flex flex-col bg-background border-r-4 border-darkerbackground">
+        <div className="w-[calc(100vw-280px)] flex flex-col bg-background border-r-4 border-darkerbackground h-[calc(100vh-40px)]">
             <Head>
                 <title>{toChatUser ? toChatUser.username : "Direct Message"} - PHiscord</title>
             </Head>

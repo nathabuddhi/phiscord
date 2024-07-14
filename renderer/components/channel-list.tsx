@@ -80,7 +80,7 @@ export default function ChannelList({ server, selectTextChannel, changeViewType,
         <>
             <div>
                 <ServerInfo server={server} changeViewType={changeViewType} />
-                <ScrollArea className={`${ isInCall ? "h-[calc(100vh-200px)]" : "h-[calc(100vh-100px)]"} w-[200px] bg-darkerbackground px-4 flex flex-col rounded-tr-[5px]`}>
+                <ScrollArea className={`${ isInCall ? "h-[calc(100vh-240px)]" : "h-[calc(100vh-140px)]"} w-[200px] bg-darkerbackground px-4 flex flex-col rounded-tr-[5px]`}>
                     <Collapsible className="mb-2" open={textChannelsOpen}>
                         <CollapsibleTrigger asChild>
                             <Button variant="ghost" size="sm" className="flex flex-row justify-normal w-full" onClick={toggleTextChannels}>

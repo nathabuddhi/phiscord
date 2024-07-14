@@ -21,7 +21,7 @@ if (isProd) {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
-    
+    frame: false,
   });
 
   if (isProd) {
@@ -85,12 +85,12 @@ if (isProd) {
     tray.setContextMenu(contextMenu);
   }
 
+  tray.setToolTip('PHiscord');
+
   ipcMain.on('update-tray', (event, data) => {
     const { isMicOn, isDeafened } = data;
     updateTray(isMicOn, isDeafened);
   });
-
-  tray.setToolTip('PHiscord');
 
   ipcMain.on('notification-received', (event, data) => {
     if(!mainWindow.isFocused())
@@ -99,11 +99,30 @@ if (isProd) {
   
   mainWindow.once('focus', () => mainWindow.flashFrame(false))
 
-  const args = process.argv.slice(1);
-  if (args.includes('--nothing')) {
-    console.error('nothing lololol');
-    return;
-  }
+  ipcMain.on('maximize-window', (event, data) => {
+    mainWindow.maximize();
+  });
+
+  ipcMain.on('unmaximize-window', (event, data) => {
+    mainWindow.unmaximize();
+  });
+
+  ipcMain.on('minimize-window', (event, data) => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.on('close-window', (event, data) => {
+    mainWindow.close();
+  });
+
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send('window-maximized');
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send('window-unmaximized');
+  })
+
 })();
 
 app.on('window-all-closed', () => {

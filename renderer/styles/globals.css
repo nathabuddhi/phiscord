@@ -73,3 +73,10 @@
   }
   
   
+.title-bar {
+  -webkit-app-region: drag;
+}
+  
+.title-bar-controls {
+    -webkit-app-region: no-drag;
+}

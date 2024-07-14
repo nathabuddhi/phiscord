@@ -45,7 +45,7 @@ export default function FriendBox({ changeUserToChat }) {
 
     return (
         <div className="w-[calc(100vw-280px)] flex flex-col bg-background">
-            <Tabs defaultValue="online" className="w-full h-[calc(100vh-40px)] m-0">
+            <Tabs defaultValue="online" className="w-full h-[calc(100vh-80px)] m-0">
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="online">Online</TabsTrigger>
                     <TabsTrigger value="all">All</TabsTrigger>

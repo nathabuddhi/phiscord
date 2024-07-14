@@ -53,7 +53,7 @@ export default function ServerList({ selectServer, changeViewType }) {
     }
 
     return (
-        <ScrollArea className="h-[calc(100vh-50px)] w-[80px] bg-serverlistbackground">
+        <ScrollArea className="h-[calc(100vh-90px)] w-[80px] bg-serverlistbackground">
             <div className="p-4 flex flex-col items-center">
                 <FriendButton changeViewType={changeViewType} changeToFriendView={changeToFriendView} />
                 <CreateServer onServerCreated={createServer} />

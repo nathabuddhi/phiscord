@@ -92,7 +92,7 @@ export default function ChatBox({ channel, server }) {
     );
 
     return (
-        <div className="w-[calc(100vw-520px)] flex flex-col bg-background border-r-4 border-darkerbackground">
+        <div className="w-[calc(100vw-520px)] flex flex-col bg-background border-r-4 border-darkerbackground h-[calc(100vh-40px)]">
             <div className="border-b-[1.5px] h-[50px] w-full border-darkerbackground rounded-b-[5px] flex flex-row items-center justify-between px-4">
                 <div className="flex flex-row">
                     <Hash size={30} />

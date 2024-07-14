@@ -43,7 +43,7 @@ export default function FriendList({ changeViewType, changeUserToChat, isInCall 
     return (
         <>
             <div>
-                <ScrollArea className={`${ isInCall ? "h-[calc(100vh-150px)]" : "h-[calc(100vh-50px)]"} w-[200px] bg-darkerbackground px-4 flex flex-col rounded-tr-[5px] pt-4`}>
+                <ScrollArea className={`${ isInCall ? "h-[calc(100vh-190px)]" : "h-[calc(100vh-90px)]"} w-[200px] bg-darkerbackground px-4 flex flex-col rounded-tr-[5px] pt-4`}>
                     <SearchConversation changeUserToChat={changeUserToChat} userDetails={user} />
                     <Button variant="ghost" className="w-full" onClick={() => changeViewType(2)}>Friends</Button>
                     <AddFriend />

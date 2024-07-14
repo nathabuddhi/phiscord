@@ -66,7 +66,7 @@ export default function RequestList() {
 
     return (
         <>
-            <ScrollArea className="h-[calc(100vh-165px)] w-full bg-darkerbackground px-4 flex flex-col">
+            <ScrollArea className="h-[calc(100vh-205px)] w-full bg-darkerbackground px-4 flex flex-col">
                 <Collapsible className="mb-2" open={incomingRequestIsOpen}>
                     <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm" className="flex flex-row justify-normal w-full" onClick={toggleIncoming}>
