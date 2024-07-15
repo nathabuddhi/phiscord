@@ -1,24 +1,22 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React, { useEffect, useState } from 'react';
-import { getFirestore, doc, onSnapshot, getDoc } from "firebase/firestore";
 import { Users, Crown, Shield } from "lucide-react";
-import { getAuth } from "firebase/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { arrayRemove, arrayUnion, updateDoc } from "firebase/firestore";
+import { arrayRemove, arrayUnion, updateDoc, doc, onSnapshot, getDoc } from "firebase/firestore";
+import { auth, db } from "@/components/firebase";
 
 export default function SettingMemberList({ server }) {
     const [owner, setOwner] = useState(null);
     const [admins, setAdmins] = useState([]);
     const [regularMembers, setRegularMembers] = useState([]);
-    const currUser = getAuth().currentUser;
+    const currUser = auth.currentUser;
     const { toast } = useToast();
 
     const banMember = async (memberId) => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 members: arrayRemove(memberId),
@@ -40,8 +38,7 @@ export default function SettingMemberList({ server }) {
 
     const kickMember = async (memberId) => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 members: arrayRemove(memberId),
@@ -62,8 +59,7 @@ export default function SettingMemberList({ server }) {
 
     const promoteMember = async (memberId) => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 admins: arrayUnion(memberId),
@@ -84,8 +80,7 @@ export default function SettingMemberList({ server }) {
 
     const demoteMember = async (memberId) => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 admins: arrayRemove(memberId),
@@ -105,8 +100,7 @@ export default function SettingMemberList({ server }) {
     }
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const serverDocRef = doc(firestore, "servers", server.id);
+        const serverDocRef = doc(db, "servers", server.id);
 
         const unsubscribe = onSnapshot(serverDocRef, async (serverDoc) => {
             if (serverDoc.exists()) {
@@ -114,7 +108,7 @@ export default function SettingMemberList({ server }) {
                 const { ownerId, admins: adminIds = [], members: memberIds = [] } = serverData;
 
                 const membersData = await Promise.all(memberIds.map(async memberId => {
-                    const memberDocRef = doc(firestore, "users", memberId);
+                    const memberDocRef = doc(db, "users", memberId);
                     const memberDoc = await getDoc(memberDocRef);
                     return { id: memberId, ...memberDoc.data() };
                 }));

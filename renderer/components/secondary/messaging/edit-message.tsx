@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
+import { db } from "@/components/firebase";
 
 const editMessageSchema = z.object({
     message: z.string().min(1, "Message cannot be empty."),
@@ -25,8 +26,7 @@ export default function EditMessage({ message, server, channel }) {
     });
 
     async function onEditSubmit(data: z.infer<typeof editMessageSchema>) {
-        const firestore = getFirestore();
-        const messageDocRef = doc(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`, message.id);
+        const messageDocRef = doc(db, `servers/${server.id}/textchannels/${channel.id}/messages`, message.id);
 
         try {
             await updateDoc(messageDocRef, {

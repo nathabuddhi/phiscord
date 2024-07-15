@@ -1,18 +1,17 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React, { useState, useEffect } from 'react';
-import { getAuth } from "firebase/auth";
 import RequestInfo from "@/components/secondary/tertiary/request-info";
+import { auth, db } from "@/components/firebase";
 
 export default function RequestList() {
     const [outgoingRequestIsOpen, setOutgoingRequestIsOpen] = useState(true);
     const [incomingRequestIsOpen, setIncomingRequestIsOpen] = useState(true);
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [outgoingRequests, setOutgoingRequests] = useState([]);
-    const auth = getAuth();
     const user = auth.currentUser;
     const [declinedRequests, setDeclinedRequests] = useState(0)
 
@@ -34,8 +33,7 @@ export default function RequestList() {
 
     useEffect(() => {
         if (user) {
-            const firestore = getFirestore();
-            const friendRequestsCollection = collection(firestore, "friendrequests");
+            const friendRequestsCollection = collection(db, "friendrequests");
 
             const incomingQuery = query(friendRequestsCollection, where("receiverId", "==", user.uid));
             const outgoingQuery = query(friendRequestsCollection, where("senderId", "==", user.uid));

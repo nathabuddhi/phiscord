@@ -7,7 +7,8 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
-import { doc, getFirestore, setDoc } from "firebase/firestore"
+import { doc, setDoc } from "firebase/firestore"
+import { db } from "@/components/firebase"
 
 const overlayFormSchema = z.object({
     enabled: z.boolean().optional(),
@@ -15,7 +16,6 @@ const overlayFormSchema = z.object({
 })
 
 export default function OverlaySettings({ userDetails }) {
-    const firestore = getFirestore();
     const { toast } = useToast();
 
     const overlayForm = useForm<z.infer<typeof overlayFormSchema>>({
@@ -28,7 +28,7 @@ export default function OverlaySettings({ userDetails }) {
 
     async function onOverlaySubmit(data: z.infer<typeof overlayFormSchema>) {
         try {
-            const userDocRef = doc(firestore, "users", userDetails.id);
+            const userDocRef = doc(db, "users", userDetails.id);
             await setDoc(userDocRef, {
                 font: data.fontsize
             }, { merge: true });

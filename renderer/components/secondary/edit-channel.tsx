@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
+import { db } from "@/components/firebase";
 
 const editChannelSchema = z.object({
     name: z.string().min(1, "Channel name cannot be empty."),
@@ -25,8 +26,7 @@ export default function EditChannel({ server, channel }) {
     });
 
     async function onEditSubmit(data: z.infer<typeof editChannelSchema>) {
-        const firestore = getFirestore();
-        const channelDocRef = doc(firestore, `servers/${server.id}/textchannels/${channel.id}`);
+        const channelDocRef = doc(db, `servers/${server.id}/textchannels/${channel.id}`);
 
         try {
             await updateDoc(channelDocRef, {

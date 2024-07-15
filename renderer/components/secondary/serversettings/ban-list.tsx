@@ -1,12 +1,12 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React, { useEffect, useState } from 'react';
-import { getFirestore, doc, onSnapshot, getDoc } from "firebase/firestore";
-import { ShieldBan, ShieldCheck } from "lucide-react";
-import { getAuth } from "firebase/auth";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import { DatabaseBackup, ShieldBan, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { arrayRemove, updateDoc } from "firebase/firestore";
+import { db } from "@/components/firebase";
 
 export default function BanList({ server }) {
     const { toast } = useToast();
@@ -14,8 +14,7 @@ export default function BanList({ server }) {
 
     const unbanMember = async (memberId) => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 bans: arrayRemove(memberId),
@@ -35,8 +34,7 @@ export default function BanList({ server }) {
     }
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const serverDocRef = doc(firestore, "servers", server.id);
+        const serverDocRef = doc(db, "servers", server.id);
     
         const unsubscribe = onSnapshot(serverDocRef, async (serverDoc) => {
             if (serverDoc.exists()) {
@@ -44,7 +42,7 @@ export default function BanList({ server }) {
                 const { bans: bannedMemberIds = [] } = serverData;
     
                 const bannedMembersData = await Promise.all(bannedMemberIds.map(async memberId => {
-                    const memberDocRef = doc(firestore, "users", memberId);
+                    const memberDocRef = doc(db, "users", memberId);
                     const memberDoc = await getDoc(memberDocRef);
                     return { id: memberId, ...memberDoc.data() };
                 }));

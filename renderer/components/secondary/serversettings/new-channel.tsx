@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/components/ui/use-toast';
 import { z } from "zod"
@@ -8,7 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select,SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
+import { db } from "@/components/firebase";
 
 const newchannelSchema = z.object({
     name: z.string().min(1, "Channel name is required.").max(12, "Maximum channel name length is 12 characters."),
@@ -28,10 +29,9 @@ export default function NewChannel({ server }) {
 
     async function onNewChannelSubmit(data: z.infer<typeof newchannelSchema>) {
         try {
-            const firestore = getFirestore();
             const collectionName = data.type === "text" ? "textchannels" : "voicechannels";
             const channelId = `${server.id}_${Date.now()}_${data.type}`;
-            const channelRef = doc(firestore, `servers/${server.id}/${collectionName}`, channelId);
+            const channelRef = doc(db, `servers/${server.id}/${collectionName}`, channelId);
             
             if(data.type === "text") {
                 await setDoc(channelRef, {

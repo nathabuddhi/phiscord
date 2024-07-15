@@ -3,19 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import AddFriend from "@/components/secondary/add-friend";
 import { Separator } from "@/components/ui/separator";
-import { getFirestore, onSnapshot, doc, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { onSnapshot, doc, getDoc } from "firebase/firestore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import SearchConversation from "@/components/secondary/search-conversation";
+import { db, auth } from "@/components/firebase";
 
 export default function FriendList({ changeViewType, changeUserToChat, isInCall }) {
     const [user, setUser] = useState(null);
     const [userMessages, setUserMessages] = useState([]);
 
     useEffect(() => {
-        const currUser = getAuth().currentUser;
-        const firestore = getFirestore();
-        const userDocRef = doc(firestore, "users", currUser.uid);
+        const currUser = auth.currentUser;
+        const userDocRef = doc(db, "users", currUser.uid);
 
         const unsubscribeUser = onSnapshot(userDocRef, async (userDoc) => {
             if (userDoc.exists()) {
@@ -25,7 +24,7 @@ export default function FriendList({ changeViewType, changeUserToChat, isInCall 
                 if (userData.messages && userData.messages.length > 0) {
                     const messagesWithUserData = await Promise.all(
                         userData.messages.map(async (userId) => {
-                            const userRef = doc(firestore, "users", userId);
+                            const userRef = doc(db, "users", userId);
                             const userSnap = await getDoc(userRef);
                             return userSnap.exists() ? { id: userId, ...userSnap.data() } : null;
                         })

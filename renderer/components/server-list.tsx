@@ -3,22 +3,20 @@ import React, { useEffect, useState } from 'react';
 import { Separator } from "@/components/ui/separator";
 import CreateServer from "@/components/secondary/create-join-server";
 import FriendButton from "@/components/secondary/friend-button";
-import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAuth } from "firebase/auth";
 import NotificationsBar from "@/components/secondary/notifications-bar";
+import { auth, db } from "@/components/firebase";
 
 export default function ServerList({ selectServer, changeViewType }) {
     const [servers, setServers] = useState([]);
     const [activeServer, setActiveServer] = useState(null);
-    const auth = getAuth();
     const user = auth.currentUser;
     let initialRender = true;
 
     useEffect(() => {
-            const firestore = getFirestore();
-            const serversCollection = collection(firestore, "servers");
+            const serversCollection = collection(db, "servers");
             const serversQuery = query(serversCollection, where("members", "array-contains", user.uid));
 
             const unsubscribe = onSnapshot(serversQuery, (snapshot) => {

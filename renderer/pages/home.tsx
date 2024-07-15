@@ -11,11 +11,11 @@ import FriendList from '@/components/friend-list';
 import FriendChatBox from '@/components/friend-chat-box';
 import CallInfo from '@/components/call-info';
 import CallBox from '@/components/call-box';
-import { getAuth } from 'firebase/auth';
-import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, collection, deleteDoc, onSnapshot, addDoc, setDoc } from 'firebase/firestore';
+import { getDoc, doc, updateDoc, arrayUnion, arrayRemove, collection, deleteDoc, onSnapshot, addDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
 import FriendCallBox from '@/components/friend-call-box';
 import { ToastAction } from "@/components/ui/toast";
+import { db, auth } from '@/components/firebase';
 
 const HomePage = ({ userDetails }) => {
     const [isViewingServer, setIsViewingServer] = useState(false);
@@ -36,8 +36,6 @@ const HomePage = ({ userDetails }) => {
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
     const [localAudioTrack, setLocalAudioTrack] = useState(null);
     const [directCall, setDirectCall] = useState('');
-
-    const firestore = getFirestore();
 
     const clientRef = useRef(null);
 
@@ -63,8 +61,8 @@ const HomePage = ({ userDetails }) => {
     };
 
     const changeUserToChat = async (userToChatId) => {
-        const tempUser = getAuth().currentUser;
-        const userDocRef = doc(firestore, "users", tempUser.uid);
+        const tempUser = auth.currentUser;
+        const userDocRef = doc(db, "users", tempUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const userData = userDoc.data();
@@ -173,7 +171,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const addJoinedUser = async (dmID, userId) => {
-        const dmDocRef = doc(firestore, 'directmessages/', dmID);
+        const dmDocRef = doc(db, 'directmessages/', dmID);
 
         await updateDoc(dmDocRef, {
             joined: arrayUnion(userId),
@@ -181,7 +179,7 @@ const HomePage = ({ userDetails }) => {
     }
 
     const removeJoinedUser = async (dmID, userId) => {
-        const dmDocRef = doc(firestore, 'directmessages/', dmID);
+        const dmDocRef = doc(db, 'directmessages/', dmID);
 
         await updateDoc(dmDocRef, {
             joined: arrayRemove(userId),
@@ -189,7 +187,7 @@ const HomePage = ({ userDetails }) => {
     }
 
     const addJoinedMember = async (serverId, channelId, userId) => {
-        const channelDocRef = doc(firestore, `servers/${serverId}/voicechannels`, channelId);
+        const channelDocRef = doc(db, `servers/${serverId}/voicechannels`, channelId);
 
         await updateDoc(channelDocRef, {
             joined: arrayUnion(userId),
@@ -197,7 +195,7 @@ const HomePage = ({ userDetails }) => {
     }
 
     const removeJoinedMember = async (serverId, channelId, userId) => {
-        const channelDocRef = doc(firestore, `servers/${serverId}/voicechannels`, channelId);
+        const channelDocRef = doc(db, `servers/${serverId}/voicechannels`, channelId);
 
         await updateDoc(channelDocRef, {
             joined: arrayRemove(userId),
@@ -266,11 +264,11 @@ const HomePage = ({ userDetails }) => {
                 else {
                     addJoinedUser(directMessageID, userDetails.id);
                     setDirectCall(directMessageID);
-                    const dmDocRef = doc(firestore, 'directmessages/', directMessageID);
+                    const dmDocRef = doc(db, 'directmessages/', directMessageID);
                     const dmDoc = await getDoc(dmDocRef);
                     if(dmDoc.exists()) {
                         if(!dmDoc.data().joined.includes(userToCall.id)) {
-                            const addNotificationDocRef = collection(firestore, `users/${userToCall.id}/toastNotifications`);
+                            const addNotificationDocRef = collection(db, `users/${userToCall.id}/toastNotifications`);
                             await addDoc(addNotificationDocRef, {
                                 title: "Incoming Call",
                                 description: `${userDetails.username} is currently calling you.`,
@@ -352,7 +350,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const toastNotificationListener = () => {
-        const notificationsCollectionRef = collection(firestore, `users/${userDetails.id}/toastNotifications`);
+        const notificationsCollectionRef = collection(db, `users/${userDetails.id}/toastNotifications`);
     
         onSnapshot(notificationsCollectionRef, (snapshot) => {
             snapshot.docChanges().forEach(async (change) => {
@@ -373,7 +371,7 @@ const HomePage = ({ userDetails }) => {
     };
 
     const setUserOnline = async () => {
-        const userDocRef = doc(firestore, "users", userDetails.id);
+        const userDocRef = doc(db, "users", userDetails.id);
         if(!userDetails.isOnline) {
             await setDoc(userDocRef, {
                 isOnline: true

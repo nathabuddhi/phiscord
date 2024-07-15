@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize, Minimize, X } from 'lucide-react';
-import { getAuth } from 'firebase/auth';
-import { doc, getFirestore, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
+import { db, auth } from '@/components/firebase';
 
 export default function TitleBar() {
-    const auth = getAuth();
-    const firestore = getFirestore();
 
     const [isMaximized, setIsMaximized] = useState(false);
 
@@ -26,7 +24,7 @@ export default function TitleBar() {
     const closeWindow = async () => {
         const tempUser = auth.currentUser;
         if(tempUser) {
-            const userDocRef = doc(firestore, "users", tempUser.uid);
+            const userDocRef = doc(db, "users", tempUser.uid);
             await setDoc(userDocRef, {
                 isOnline: false
             }, { merge: true });

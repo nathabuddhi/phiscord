@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, doc, getDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, arrayUnion } from "firebase/firestore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from '@/components/ui/use-toast';
-import { getAuth } from 'firebase/auth';
+import { auth, db } from '@/components/firebase';
 
 export default function RequestInfo({ request, type }) {
     const [friendInfo, setFriendInfo] = useState(null);
-    const firestore = getFirestore();
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
 
     const acceptFriendRequest = async () => {
         try {
-            const senderDocRef = doc(firestore, "users", request.senderId);
-            const receiverDocRef = doc(firestore, "users", request.receiverId);
-            const requestDocRef = doc(firestore, "friendrequests", request.id);
+            const senderDocRef = doc(db, "users", request.senderId);
+            const receiverDocRef = doc(db, "users", request.receiverId);
+            const requestDocRef = doc(db, "friendrequests", request.id);
 
             await Promise.all([
                 updateDoc(senderDocRef, {
@@ -46,7 +45,7 @@ export default function RequestInfo({ request, type }) {
 
     const declineFriendRequest = async () => {
         try {
-            const requestDocRef = doc(firestore, "friendrequests", request.id);
+            const requestDocRef = doc(db, "friendrequests", request.id);
 
             await updateDoc(requestDocRef, {
                 status: 'declined'
@@ -68,7 +67,7 @@ export default function RequestInfo({ request, type }) {
 
     const cancelFriendRequest = async () => {
         try {
-            const requestDocRef = doc(firestore, "friendrequests", request.id);
+            const requestDocRef = doc(db, "friendrequests", request.id);
 
             await deleteDoc(requestDocRef);
             toast({
@@ -87,9 +86,8 @@ export default function RequestInfo({ request, type }) {
 
     const blockUser = async () => {
         try {
-            const user = getAuth().currentUser;
-            const userDocRef = doc(firestore, "users", user.uid);
-            const requestDocRef = doc(firestore, "friendrequests", request.id);
+            const userDocRef = doc(db, "users", user.uid);
+            const requestDocRef = doc(db, "friendrequests", request.id);
 
             await Promise.all([
                 updateDoc(requestDocRef, {
@@ -117,7 +115,7 @@ export default function RequestInfo({ request, type }) {
     useEffect(() => {
         const fetchFriendInfo = async () => {
             const friendId = type === "incoming" ? request.senderId : request.receiverId;
-            const friendDocRef = doc(firestore, "users", friendId);
+            const friendDocRef = doc(db, "users", friendId);
             const friendDoc = await getDoc(friendDocRef);
             if (friendDoc.exists()) {
                 setFriendInfo(friendDoc.data());
@@ -129,7 +127,7 @@ export default function RequestInfo({ request, type }) {
         };
 
         fetchFriendInfo();
-    }, [request, type, firestore]);
+    }, [request, type, db]);
 
     if (loading) {
         return (

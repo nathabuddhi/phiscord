@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { getFirestore, doc, getDoc, arrayRemove, updateDoc, onSnapshot } from "firebase/firestore";
+import { doc, arrayRemove, updateDoc, onSnapshot } from "firebase/firestore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { getAuth } from "firebase/auth";
+import { auth, db } from "@/components/firebase";
 
 export default function FriendInfo({ friendId, changeUserToChat, online }) {
     const { toast } = useToast();
@@ -12,8 +12,7 @@ export default function FriendInfo({ friendId, changeUserToChat, online }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const friendDocRef = doc(firestore, "users", friendId);
+        const friendDocRef = doc(db, "users", friendId);
 
         const unsubscribe = onSnapshot(friendDocRef, (friendDoc) => {
             if (friendDoc.exists()) {
@@ -29,10 +28,9 @@ export default function FriendInfo({ friendId, changeUserToChat, online }) {
 
     const unfriendUser = async (userToUnfriendId) => {
         try {
-            const firestore = getFirestore();
-            const user = getAuth().currentUser;
-            const userDocRef = doc(firestore, "users", user.uid);
-            const toUnfriendDocRef = doc(firestore, "users", userToUnfriendId);
+            const user = auth.currentUser;
+            const userDocRef = doc(db, "users", user.uid);
+            const toUnfriendDocRef = doc(db, "users", userToUnfriendId);
 
             await Promise.all([
                 updateDoc(userDocRef, {

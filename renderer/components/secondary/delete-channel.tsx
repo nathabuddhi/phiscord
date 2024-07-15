@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getFirestore, doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
+import { db } from "@/components/firebase";
 
 export default function DeleteChannel({ server, channel, type }) {
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
 
     const deleteChannel = async () => {
-        const firestore = getFirestore();
-        const channelDocRef = doc(firestore, `servers/${server.id}/${type}/${channel.id}`);
+        const channelDocRef = doc(db, `servers/${server.id}/${type}/${channel.id}`);
 
         try {
             await deleteDoc(channelDocRef);

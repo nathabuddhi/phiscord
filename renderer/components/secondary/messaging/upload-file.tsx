@@ -3,16 +3,13 @@ import { Button } from "@/components/ui/button";
 import { FileUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
-import { getAuth } from "firebase/auth";
+import { auth, db, storage } from "@/components/firebase";
 
 export default function UploadFile({ server, channel }) {
     const { toast } = useToast();
-    const storage = getStorage();
-    const firestore = getFirestore();
-    const auth = getAuth();
     const user = auth.currentUser;
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,7 +38,7 @@ export default function UploadFile({ server, channel }) {
         try {
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
-            const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
+            const messagesRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
             let fileSize;
             if (file.size >= 1024 * 1024 * 1024) {
                 fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";

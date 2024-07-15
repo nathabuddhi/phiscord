@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getFirestore, getDoc, doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/components/firebase";
 
 export default function CallJoined({ userId, serverId }) {
     const [user, setUser] = useState(null);
@@ -8,9 +9,8 @@ export default function CallJoined({ userId, serverId }) {
     const [nickname, setNickname] = useState('');
     
     useEffect(() => {
-        const firestore = getFirestore();
-        const userDocRef = doc(firestore, "users", userId);
-        const nicknameDocRef = doc(firestore, `servers/${serverId}/nicknames`, userId);
+        const userDocRef = doc(db, "users", userId);
+        const nicknameDocRef = doc(db, `servers/${serverId}/nicknames`, userId);
 
         const unsubcribeNickname = onSnapshot(nicknameDocRef, (nicknameDoc) => {
             if (nicknameDoc.exists()) {

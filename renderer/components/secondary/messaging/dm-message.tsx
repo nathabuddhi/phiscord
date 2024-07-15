@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import React, { useState, useEffect } from "react";
-import { getFirestore, doc, onSnapshot } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditDMMessage from "@/components/secondary/messaging/edit-dm-message";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Linkify from 'react-linkify';
 import LinkStyles from "@/styles/message.module.scss";
+import { auth, db } from "@/components/firebase";
 
 export default function DirectMessage({ message, dmID }) {
     const [author, setAuthor] = useState(null);
@@ -18,11 +18,10 @@ export default function DirectMessage({ message, dmID }) {
     const [blocked, setBlocked] = useState(false);
 
     useEffect(() => {
-        const authUser = getAuth().currentUser;
+        const authUser = auth.currentUser;
         setUser(authUser);
-        const firestore = getFirestore();
-        const authorDocRef = doc(firestore, "users", message.userId);
-        const userDocRef = doc(firestore, "users", authUser.uid);
+        const authorDocRef = doc(db, "users", message.userId);
+        const userDocRef = doc(db, "users", authUser.uid);
 
         const unsubscribeAuthor = onSnapshot(authorDocRef, (authorDoc) => {
             if (authorDoc.exists()) {

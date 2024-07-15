@@ -1,13 +1,14 @@
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from '@/components/ui/use-toast';
-import { doc, deleteDoc, getFirestore } from "firebase/firestore";
-import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
+import { doc, deleteDoc } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
+import { auth, db } from "@/components/firebase";
 
 const deleteServerSchema = z.object({
     name: z.string().min(1, "Server name is required."),
@@ -26,8 +27,7 @@ export default function DeleteServer({ server, changeViewType }) {
     })
 
     async function onDeleteSubmit(data: z.infer<typeof deleteServerSchema>) {
-        const firestore = getFirestore();
-        const serverDocRef = doc(firestore, `servers/${server.id}`);
+        const serverDocRef = doc(db, `servers/${server.id}`);
 
         if (data.name !== server.name) {
             toast({
@@ -38,7 +38,7 @@ export default function DeleteServer({ server, changeViewType }) {
             return;
         }
 
-        const currUser = getAuth().currentUser;
+        const currUser = auth.currentUser;
         const credential = EmailAuthProvider.credential(
             currUser.email!,
             data.password

@@ -1,12 +1,13 @@
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useToast } from '@/components/ui/use-toast';
+import { auth } from "@/components/firebase";
 
 const passwordFormSchema = z.object({
     current: z.string().min(1, "Current password is required!"),
@@ -35,7 +36,6 @@ export default function PasswordSettings({ userDetails }) {
     })
 
     async function onPasswordSubmit(data: z.infer<typeof passwordFormSchema>) {
-        const auth = getAuth();
         const user = auth.currentUser;
     
         if (user) {

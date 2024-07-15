@@ -1,9 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import React, { useState, useEffect } from "react";
-import { getFirestore, doc, onSnapshot } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } from "@/components/ui/context-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditMessage from "@/components/secondary/messaging/edit-message";
 import DeleteMessage from "@/components/secondary/messaging/delete-message";
@@ -11,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Linkify from 'react-linkify';
 import LinkStyles from "@/styles/message.module.scss";
+import { auth, db } from "@/components/firebase";
 
 export default function Message({ message, server, channel }) {
     const [author, setAuthor] = useState(null);
@@ -20,11 +19,10 @@ export default function Message({ message, server, channel }) {
     const [nickname, setNickname] = useState('');
 
     useEffect(() => {
-        const authUser = getAuth().currentUser;
-        const firestore = getFirestore();
-        const authorDocRef = doc(firestore, "users", message.userId);
-        const userDocRef = doc(firestore, "users", authUser.uid);
-        const nicknameDocRef = doc(firestore, `servers/${server.id}/nicknames`, message.userId);
+        const authUser = auth.currentUser;
+        const authorDocRef = doc(db, "users", message.userId);
+        const userDocRef = doc(db, "users", authUser.uid);
+        const nicknameDocRef = doc(db, `servers/${server.id}/nicknames`, message.userId);
 
         const unsubscribeAuthor = onSnapshot(authorDocRef, (authorDoc) => {
             if (authorDoc.exists()) {

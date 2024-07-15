@@ -2,15 +2,15 @@ import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getFirestore, doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
+import { db } from "@/components/firebase";
 
 export default function DeleteMessage({ message, server, channel }) {
     const { toast } = useToast();
 
     const deleteMessage = async () => {
-        const firestore = getFirestore();
-        const messageDocRef = doc(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`, message.id);
+        const messageDocRef = doc(db, `servers/${server.id}/textchannels/${channel.id}/messages`, message.id);
 
         try {
             await deleteDoc(messageDocRef);

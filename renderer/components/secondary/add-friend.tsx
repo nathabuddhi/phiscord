@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from '@/components/ui/use-toast';
@@ -9,7 +9,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { auth } from '@/components/firebase';
 
 const addFriendSchema = z.object({
     friendId: z.string().length(28, "Invalid User ID! User ID's must be 28 characters long!"),
@@ -17,7 +17,7 @@ const addFriendSchema = z.object({
 
 export default function AddFriend() {
     const { toast } = useToast();
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const addFriendForm = useForm<z.infer<typeof addFriendSchema>>({

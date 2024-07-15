@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import Head from "next/head";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc, collection, query, where, getDocs, getDoc } from "firebase/firestore";
+import { setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import guestMiddleware from '@/components/middleware/guest-middleware';

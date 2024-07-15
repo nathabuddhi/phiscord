@@ -1,8 +1,9 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React, { useEffect, useState } from 'react';
-import { getFirestore, doc, onSnapshot, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { Users, Crown, Shield } from "lucide-react";
 import MemberProfile from "@/components/secondary/member-profile";
+import { db } from "@/components/firebase";
 
 export default function MemberList({ server, changeUserToChat }) {
     const [owner, setOwner] = useState(null);
@@ -10,8 +11,7 @@ export default function MemberList({ server, changeUserToChat }) {
     const [regularMembers, setRegularMembers] = useState([]);
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const serverDocRef = doc(firestore, "servers", server.id);
+        const serverDocRef = doc(db, "servers", server.id);
 
         const unsubscribe = onSnapshot(serverDocRef, async (serverDoc) => {
             if (serverDoc.exists()) {
@@ -19,7 +19,7 @@ export default function MemberList({ server, changeUserToChat }) {
                 const { ownerId, admins: adminIds = [], members: memberIds = [] } = serverData;
 
                 const membersData = await Promise.all(memberIds.map(async memberId => {
-                    const memberDocRef = doc(firestore, "users", memberId);
+                    const memberDocRef = doc(db, "users", memberId);
                     const memberDoc = await getDoc(memberDocRef);
                     return { id: memberId, ...memberDoc.data() };
                 }));

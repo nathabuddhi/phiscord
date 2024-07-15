@@ -1,17 +1,17 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import GeneralServerSettings from "@/components/secondary/serversettings/general-server-settings";
-import { getAuth } from "firebase/auth";
 import SettingMemberList from "@/components/secondary/serversettings/setting-member-list";
 import BanList from "@/components/secondary/serversettings/ban-list";
 import DeleteServer from "@/components/secondary/serversettings/delete-server";
+import { auth } from "@/components/firebase";
 
 export default function ServerSettings ({ server, changeViewType }) {
     const [isOpen, setIsOpen] = useState(false);
 
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
 
     const toggleOpen = () => {
         setIsOpen(prevState => !prevState);

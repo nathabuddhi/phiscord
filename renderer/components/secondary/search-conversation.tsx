@@ -3,19 +3,18 @@ import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogFooter, Dialo
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { query, getFirestore, collection, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { query, collection, where, getDocs } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
+import { db } from '@/components/firebase';
 
 export default function SearchConversation({ changeUserToChat, userDetails }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const firestore = getFirestore();
-
     const searchConvo = async (searchQuery) => {
         const dmQuery = query(
-            collection(firestore, "directmessages"),
+            collection(db, "directmessages"),
             where("participants", "array-contains", userDetails.id)
         );
     
@@ -26,7 +25,7 @@ export default function SearchConversation({ changeUserToChat, userDetails }) {
             const searchPromises = [];
     
             dmSnapshot.forEach((dm) => {
-                const messagesRef = collection(firestore, "directmessages", dm.id, "messages");
+                const messagesRef = collection(db, "directmessages", dm.id, "messages");
     
                 searchPromises.push(getDocs(messagesRef).then((messagesSnapshot) => {
                     messagesSnapshot.forEach((message) => {

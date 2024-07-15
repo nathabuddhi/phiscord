@@ -1,7 +1,7 @@
 import { Hash, SmilePlus, Search, PhoneCall } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from 'react';
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc, limit, startAfter } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc, limit, startAfter } from "firebase/firestore";
 import DirectMessage from "@/components/secondary/messaging/dm-message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,12 +15,12 @@ import { useTheme } from "next-themes";
 import Filter from 'bad-words';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, db } from "@/components/firebase";
 
 export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const { toast } = useToast();
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState("");
-    const firestore = getFirestore();
     const [currUser, setCurrUser] = useState(null);
     const [toChatUser, setToChatUser] = useState(null);
     const [directMessageId, setDirectMessageId] = useState(null);
@@ -48,7 +48,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     }, [messages]);
 
     const fetchMessages = async (directMessageId, lastVisibleMessage) => {
-        const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
+        const messagesRef = collection(db, `directmessages/${directMessageId}/messages`);
         let messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(20));
         if(lastVisibleMessage) {
             messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
@@ -85,8 +85,8 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             return;
         }
 
-        const userDocRef = doc(firestore, "users", tempUser.uid);
-        const toChatDocRef = doc(firestore, "users", toChatId);
+        const userDocRef = doc(db, "users", tempUser.uid);
+        const toChatDocRef = doc(db, "users", toChatId);
 
         const unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -124,12 +124,12 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         if (currUser && toChatUser) {
             const initializeDM = async () => {
                 if (!currUser || !toChatUser) return;
-                const dmQuery = query(collection(firestore, "directmessages"), where("participants", "array-contains", currUser.id));
+                const dmQuery = query(collection(db, "directmessages"), where("participants", "array-contains", currUser.id));
                 const dmSnapshot = await getDocs(dmQuery);
                 let dmDoc = dmSnapshot.docs.find(doc => doc.data().participants.includes(toChatId));
 
                 if (!dmDoc) {
-                    const newDMRef = await addDoc(collection(firestore, "directmessages"), {
+                    const newDMRef = await addDoc(collection(db, "directmessages"), {
                         participants: [currUser.id, toChatId],
                     });
                     await setDoc(newDMRef, { id: newDMRef.id }, { merge: true });
@@ -183,7 +183,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             })
             return;
         } else if(!toChatUser.messages.includes(currUser.id)) {
-            const receiverDocRef = doc(firestore, "users", toChatUser.id);
+            const receiverDocRef = doc(db, "users", toChatUser.id);
 
             await updateDoc(receiverDocRef, {
                 messages: arrayUnion(currUser.id)
@@ -191,21 +191,21 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         }
 
         try {
-            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            const addNotificationDocRef = collection(db, `users/${toChatUser.id}/toastNotifications`);
             await addDoc(addNotificationDocRef, {
                 title: "New Message",
                 description: `${currUser.username} sent you a direct message.`,
                 senderId: currUser.id,
                 duration: 3000,
             });
-            const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
+            const messagesRef = collection(db, `directmessages/${directMessageId}/messages`);
             await addDoc(messagesRef, {
                 content: content,
                 timestamp: serverTimestamp(),
                 userId: currUser.id,
                 type: "text"
             });
-            const notifQuery = collection(firestore, `users/${toChatUser.id}/notifications`);
+            const notifQuery = collection(db, `users/${toChatUser.id}/notifications`);
             await addDoc(notifQuery, {
                 content: "Sent you a message.",
                 from: currUser.id,
@@ -286,7 +286,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             });
             return;
         }  else if(!toChatUser.messages.includes(currUser.id)) {
-            const receiverDocRef = doc(firestore, "users", toChatUser.id);
+            const receiverDocRef = doc(db, "users", toChatUser.id);
 
             await updateDoc(receiverDocRef, {
                 messages: arrayUnion(currUser.id)
@@ -301,7 +301,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         const fileType = file.type.startsWith("image/") ? "image" : "file";
         const storageRef = ref(storage, `uploads/${directMessageId}/${file.name}`);
         try {
-            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            const addNotificationDocRef = collection(db, `users/${toChatUser.id}/toastNotifications`);
             await addDoc(addNotificationDocRef, {
                 title: "New Message",
                 description: `${currUser.username} sent you a file`,
@@ -310,7 +310,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             });
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
-            const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
+            const messagesRef = collection(db, `directmessages/${directMessageId}/messages`);
             let fileSize;
             if (file.size >= 1024 * 1024 * 1024) {
                 fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
@@ -331,7 +331,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             setFile(null);
             setDialogOpen(false);
 
-            const notifQuery = collection(firestore, `users/${toChatId}/notifications`);
+            const notifQuery = collection(db, `users/${toChatId}/notifications`);
             await addDoc(notifQuery, {
                 content: "Sent you a file.",
                 from: currUser.id,

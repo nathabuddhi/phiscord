@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from '@/components/ui/use-toast';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -14,7 +14,9 @@ import { storage } from "@/components/firebase";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { db } from "@/components/firebase";
+
 const newServerSchema = z.object({
     serverName: z.string().min(3, "Server names must be at least 3 characters long!"),
     serverIcon: z.any().optional()
@@ -38,10 +40,9 @@ export default function CreateServer({ onServerCreated}) {
     async function onJoinServerSubmit(data: z.infer<typeof joinServerSchema>) {
         const auth = getAuth();
         const user = auth.currentUser;
-        const firestore = getFirestore();
 
         try {
-            const serverRef = doc(firestore, "servers", data.serverId);
+            const serverRef = doc(db, "servers", data.serverId);
             const serverDoc = await getDoc(serverRef);
 
             if (serverDoc.exists()) {
@@ -99,7 +100,6 @@ export default function CreateServer({ onServerCreated}) {
     async function onNewServerSubmit(data: z.infer<typeof newServerSchema>) {
         const auth = getAuth();
         const user = auth.currentUser;
-        const firestore = getFirestore();
     
         try {
             let serverIconUrl = "";
@@ -111,7 +111,7 @@ export default function CreateServer({ onServerCreated}) {
                 serverIconUrl = await getDownloadURL(storageRef);
             }
     
-            const serverRef = doc(firestore, "servers", serverId);
+            const serverRef = doc(db, "servers", serverId);
             const newServerData = {
                 id: serverId,
                 name: data.serverName,
@@ -125,14 +125,14 @@ export default function CreateServer({ onServerCreated}) {
             await setDoc(serverRef, newServerData);
     
             const textChannelId = `${serverId}_${Date.now()}_text`;
-            const textChannelRef = doc(firestore, `servers/${serverId}/textchannels`, textChannelId);
+            const textChannelRef = doc(db, `servers/${serverId}/textchannels`, textChannelId);
             await setDoc(textChannelRef, {
                 id: textChannelId,
                 name: "general"
             });
     
             const voiceChannelId = `${serverId}_${Date.now()}_voice`;
-            const voiceChannelRef = doc(firestore, `servers/${serverId}/voicechannels`, voiceChannelId);
+            const voiceChannelRef = doc(db, `servers/${serverId}/voicechannels`, voiceChannelId);
             await setDoc(voiceChannelRef, {
                 id: voiceChannelId,
                 name: "general",

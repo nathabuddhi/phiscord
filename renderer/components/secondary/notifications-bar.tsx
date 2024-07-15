@@ -2,22 +2,20 @@ import { Bell, BellDot } from "lucide-react";
 import { Dialog, DialogTrigger, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { onSnapshot, doc, collection, getFirestore, deleteDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { onSnapshot, doc, collection, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import NotificationInfo from "@/components/secondary/tertiary/notification-info";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { auth, db } from "@/components/firebase";
 
 export default function NotificationsBar() {
     const { toast } = useToast();
     const [notifications, setNotifications] = useState([]);
-    const firestore = getFirestore();
-    const auth = getAuth();
   
     useEffect(() => {
         const user = auth.currentUser;
-        const notifCollection = collection(firestore, `users/${user.uid}/notifications`);
+        const notifCollection = collection(db, `users/${user.uid}/notifications`);
         const unsubscribe = onSnapshot(notifCollection, (snapshot) => {
             const notificationsList = snapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -37,7 +35,7 @@ export default function NotificationsBar() {
   
     const deleteAllNotifs = async () => {
         const user = auth.currentUser;
-        const notifQuery = collection(firestore, `users/${user.uid}/notifications`);
+        const notifQuery = collection(db, `users/${user.uid}/notifications`);
     
         try {
             await Promise.all(notifications.map((notif) => deleteDoc(doc(notifQuery, notif.id))));

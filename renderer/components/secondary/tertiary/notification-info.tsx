@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { getFirestore, doc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { doc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { db } from "@/components/firebase";
 
 export default function NotificationInfo({ user, notification }) {
     const { toast } = useToast();
-    const firestore = getFirestore();
     const [sender, setSender] = useState(null);
 
     useEffect(() => {
-        const senderDocRef = doc(firestore, "users", notification.from);
+        const senderDocRef = doc(db, "users", notification.from);
         const unsubcribe = onSnapshot(senderDocRef, (snapshot) => {
             if(snapshot.exists()) {
                 setSender(snapshot.data());
@@ -21,7 +21,7 @@ export default function NotificationInfo({ user, notification }) {
     }, [])
 
     const deleteNotification = async () => {
-        const notifDocRef = doc(firestore, `users/${user.uid}/notifications`, notification.id);
+        const notifDocRef = doc(db, `users/${user.uid}/notifications`, notification.id);
     
         try {
             await deleteDoc(notifDocRef);

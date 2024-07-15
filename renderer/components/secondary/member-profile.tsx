@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from '@/components/ui/use-toast';
-import { getFirestore, doc, getDoc, addDoc, collection, onSnapshot, where, getDocs, serverTimestamp, query } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { doc, getDoc, addDoc, collection, onSnapshot, where, getDocs, serverTimestamp, query } from "firebase/firestore";
+import { auth, db } from '@/components/firebase';
 
 export default function MemberProfile({ userId, changeUserToChat, serverId }) {
     const [user, setUser] = useState(null);
@@ -13,8 +13,7 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
     const [nickname, setNickname] = useState('');
 
     async function checkForExistingFriendRequest(senderId, receiverId) {
-        const firestore = getFirestore();
-        const friendRequestsRef = collection(firestore, "friendrequests");
+        const friendRequestsRef = collection(db, "friendrequests");
         const q = query(friendRequestsRef, where("senderId", "==", senderId), where("receiverId", "==", receiverId));
         const q2 = query(friendRequestsRef, where("senderId", "==", receiverId), where("receiverId", "==", senderId));
         const querySnapshot = await getDocs(q);
@@ -27,8 +26,7 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
 
     async function sendFriendRequest() {
         try {
-            const firestore = getFirestore();
-            const currUser = getAuth().currentUser;
+            const currUser = auth.currentUser;
             const currUserId = currUser.uid;
             const userToAddId = userId;
 
@@ -41,8 +39,8 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
                 return;
             }
 
-            const userDocRef = doc(firestore, "users", currUserId);
-            const userToAddDocRef = doc(firestore, "users", userToAddId);
+            const userDocRef = doc(db, "users", currUserId);
+            const userToAddDocRef = doc(db, "users", userToAddId);
 
             const [userDoc, userToAddDoc] = await Promise.all([
                 getDoc(userDocRef),
@@ -84,14 +82,14 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
                         description: "You already have a pending friend request with this user.",
                     });
                 } else {
-                    const friendRequestsRef = collection(firestore, "friendrequests");
+                    const friendRequestsRef = collection(db, "friendrequests");
                     await addDoc(friendRequestsRef, {
                         senderId: currUserId,
                         receiverId: userToAddId,
                         timestamp: serverTimestamp(),
                         status: "pending"
                     });
-                    const notifQuery = collection(firestore, `users/${userToAddId}/notifications`);
+                    const notifQuery = collection(db, `users/${userToAddId}/notifications`);
                     await addDoc(notifQuery, {
                         content: "Sent you a friend request.",
                         from: currUserId,
@@ -113,9 +111,8 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
     }
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const userDocRef = doc(firestore, "users", userId);
-        const nicknameDocRef = doc(firestore, `servers/${serverId}/nicknames`, userId);
+        const userDocRef = doc(db, "users", userId);
+        const nicknameDocRef = doc(db, `servers/${serverId}/nicknames`, userId);
 
         const unsubcribeNickname = onSnapshot(nicknameDocRef, (nicknameDoc) => {
             if (nicknameDoc.exists()) {
@@ -176,7 +173,7 @@ export default function MemberProfile({ userId, changeUserToChat, serverId }) {
                     <p className="text-xs text-gray-500">{user.status}</p>
                 </div>
                 {
-                    userId != getAuth().currentUser.uid &&
+                    userId != auth.currentUser.uid &&
                     <div className='flex flex-col'>
                         <Button onClick={sendFriendRequest} variant='outline' className='my-2'>Send Friend Request</Button>
                         <Button onClick={() => changeUserToChat(userId)} variant='outline'>Send Message</Button>

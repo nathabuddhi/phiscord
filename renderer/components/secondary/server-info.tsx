@@ -6,11 +6,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import NewChannel from "@/components/secondary/serversettings/new-channel";
 import ServerSettings from "@/components/secondary/serversettings/server-settings";
 import { Separator } from "@/components/ui/separator";
-import { getAuth } from "firebase/auth";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast";
-import { getFirestore, doc, updateDoc, arrayRemove } from "firebase/firestore";
+import { doc, updateDoc, arrayRemove } from "firebase/firestore";
 import ChangeNickname from "@/components/secondary/serversettings/change-nickname";
+import { auth, db } from "@/components/firebase";
 
 export default function ServerInfo({ server, changeViewType }) {
     const [infoOpen, setInfoOpen] = useState(false);
@@ -19,7 +19,6 @@ export default function ServerInfo({ server, changeViewType }) {
 
     useEffect(() => {
         const fetchCurrentUser = () => {
-            const auth = getAuth();
             const user = auth.currentUser;
             setUser(user);
         };
@@ -49,8 +48,7 @@ export default function ServerInfo({ server, changeViewType }) {
 
     const leaveServer = async () => {
         try {
-            const firestore = getFirestore();
-            const serverDocRef = doc(firestore, "servers", server.id);
+            const serverDocRef = doc(db, "servers", server.id);
 
             await updateDoc(serverDocRef, {
                 members: arrayRemove(user.uid),

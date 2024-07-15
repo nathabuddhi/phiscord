@@ -1,12 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import React, { useState, useEffect } from 'react';
-import { getAuth } from "firebase/auth";
-import { getFirestore, doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
 import FriendInfo from "@/components/secondary/friend-info";
 import RequestList from "@/components/secondary/request-list";
 import BlockInfo from "@/components/secondary/block-info";
+import { db, auth } from "@/components/firebase";
 
 export default function FriendBox({ changeUserToChat }) {
     const { toast } = useToast();
@@ -15,10 +15,8 @@ export default function FriendBox({ changeUserToChat }) {
     const [blocked, setBlocked] = useState([]);
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const auth = getAuth();
         const tempUser = auth.currentUser;
-        const userDocRef = doc(firestore, "users", tempUser.uid);
+        const userDocRef = doc(db, "users", tempUser.uid);
 
         const unsubscribe = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {

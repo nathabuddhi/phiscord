@@ -2,13 +2,12 @@ import Link from "next/link";
 import ModeToggle from "./mode-toggle";
 import Image from "next/image";
 
-
 export default function SiteHeader() {
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background overflow-hidden">
             <div className="container flex h-14 max-w-screen-2xl items-center">
                 <div className="mr-4 flex">
-                    <Link href="/main" className="mr-6 flex items-center space-x-2">
+                    <Link href="/home" className="mr-6 flex items-center space-x-2">
                         <Image
                             className="mr-auto ml-10"
                             src="/images/logofull.svg"

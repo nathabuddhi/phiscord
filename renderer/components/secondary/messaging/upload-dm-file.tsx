@@ -3,16 +3,13 @@ import { Button } from "@/components/ui/button";
 import { FileUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp, doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
-import { getAuth } from "firebase/auth";
+import { auth, db, storage } from "@/components/firebase";
 
 export default function UploadFile({ dmID, receiverID }) {
     const { toast } = useToast();
-    const storage = getStorage();
-    const firestore = getFirestore();
-    const auth = getAuth();
     const user = auth.currentUser;
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -24,10 +21,10 @@ export default function UploadFile({ dmID, receiverID }) {
     };
 
     useEffect(() => {
-        const tempUser = getAuth().currentUser;
+        const tempUser = auth.currentUser;
 
-        const userDocRef = doc(firestore, "users", tempUser.uid);
-        const toChatDocRef = doc(firestore, "users", receiverID);
+        const userDocRef = doc(db, "users", tempUser.uid);
+        const toChatDocRef = doc(db, "users", receiverID);
 
         const unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -91,7 +88,7 @@ export default function UploadFile({ dmID, receiverID }) {
             });
             return;
         }  else if(!toChatUser.messages.includes(currUser.id)) {
-            const receiverDocRef = doc(firestore, "users", toChatUser.id);
+            const receiverDocRef = doc(db, "users", toChatUser.id);
 
             await updateDoc(receiverDocRef, {
                 messages: arrayUnion(currUser.id)
@@ -106,7 +103,7 @@ export default function UploadFile({ dmID, receiverID }) {
         const fileType = file.type.startsWith("image/") ? "image" : "file";
         const storageRef = ref(storage, `uploads/${dmID}/${file.name}`);
         try {
-            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            const addNotificationDocRef = collection(db, `users/${toChatUser.id}/toastNotifications`);
             await addDoc(addNotificationDocRef, {
                 title: "New Message",
                 description: `${currUser.username} sent you a file`,
@@ -115,7 +112,7 @@ export default function UploadFile({ dmID, receiverID }) {
             });
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
-            const messagesRef = collection(firestore, `directmessages/${dmID}/messages`);
+            const messagesRef = collection(db, `directmessages/${dmID}/messages`);
             let fileSize;
             if (file.size >= 1024 * 1024 * 1024) {
                 fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
@@ -136,7 +133,7 @@ export default function UploadFile({ dmID, receiverID }) {
             setFile(null);
             setDialogOpen(false);
 
-            const notifQuery = collection(firestore, `users/${receiverID}/notifications`);
+            const notifQuery = collection(db, `users/${receiverID}/notifications`);
             await addDoc(notifQuery, {
                 content: "Sent you a file.",
                 from: auth.currentUser.uid,

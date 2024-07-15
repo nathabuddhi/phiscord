@@ -2,12 +2,12 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { collection, doc, getDocs, getFirestore, query, setDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { auth, db } from "@/components/firebase";
 import Link from "next/link";
 
@@ -19,11 +19,10 @@ const generalFormSchema = z.object({
 
 export default function GeneralSettings({ userDetails }) {
     const { toast } = useToast();
-    const firestore = getFirestore();
 
     async function logout() {
         try {
-            const userDocRef = doc(firestore, "users", userDetails.id);
+            const userDocRef = doc(db, "users", userDetails.id);
             await setDoc(userDocRef, {
                 isOnline: false
             }, { merge: true });

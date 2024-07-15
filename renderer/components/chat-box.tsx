@@ -1,11 +1,10 @@
 import { Hash, SmilePlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, getDocs, limit, startAfter } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, limit, startAfter } from "firebase/firestore";
 import Message from "@/components/secondary/messaging/message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getAuth } from "firebase/auth";
 import UploadFile from "@/components/secondary/messaging/upload-file";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -13,19 +12,17 @@ import Picker from '@emoji-mart/react';
 import { useTheme } from "next-themes";
 import Filter from 'bad-words';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth, storage } from "@/components/firebase";
 
 export default function ChatBox({ channel, server }) {
     const { toast } = useToast();
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState("");
-    const firestore = getFirestore();
-    const auth = getAuth();
     const user = auth.currentUser;
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
     const [isDragging, setIsDragging] = useState(false);
-    const storage = getStorage();
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
@@ -45,7 +42,7 @@ export default function ChatBox({ channel, server }) {
     }, [messages]);
 
     const fetchMessages = async (channelId, serverId, lastVisibleMessage) => {
-        const messagesRef = collection(firestore, `servers/${serverId}/textchannels/${channelId}/messages`);
+        const messagesRef = collection(db, `servers/${serverId}/textchannels/${channelId}/messages`);
         let messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(20));
         if (lastVisibleMessage) {
             messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
@@ -61,11 +58,7 @@ export default function ChatBox({ channel, server }) {
 
     useEffect(() => {
         if (!server || !channel) {
-            toast({
-                variant: "destructive",
-                title: "Uh oh. Something went wrong.",
-                description: "Failed to load messages. Please try again later."
-            })
+            return;
         }
 
         const fetchInitialMessages = async () => {
@@ -101,7 +94,7 @@ export default function ChatBox({ channel, server }) {
         }
 
         try {
-            const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
+            const messagesRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
             await addDoc(messagesRef, {
                 content: content,
                 timestamp: serverTimestamp(),
@@ -172,7 +165,7 @@ export default function ChatBox({ channel, server }) {
         try {
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
-            const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
+            const messagesRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
             let fileSize;
             if (file.size >= 1024 * 1024 * 1024) {
                 fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";

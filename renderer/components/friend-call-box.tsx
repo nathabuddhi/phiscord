@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { doc, getFirestore, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/components/firebase';
 
 export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack, localVideoOn, remoteTracks }) {
     const [remoteUser, setRemoteUser] = useState(null);
@@ -10,9 +11,7 @@ export default function FriendCallBox({ localUser, remoteUserId, localVideoTrack
         if(!localUser || !remoteUserId)
             return;
 
-        const firestore = getFirestore();
-
-        const toCallDocRef = doc(firestore, 'users', remoteUserId);
+        const toCallDocRef = doc(db, 'users', remoteUserId);
         const unsubscribe = onSnapshot(toCallDocRef, async (snapshot) => {
             if (snapshot.exists()) {
                 setRemoteUser(snapshot.data());

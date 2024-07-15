@@ -4,12 +4,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, Hash, Volume1 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ServerInfo from "@/components/secondary/server-info";
-import { getFirestore, collection, onSnapshot } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { collection, onSnapshot } from "firebase/firestore";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import EditChannel from "@/components/secondary/edit-channel";
 import DeleteChannel from "@/components/secondary/delete-channel";
 import CallJoined from "./secondary/call-joined";
+import { auth, db } from "@/components/firebase";
 
 export default function ChannelList({ server, selectTextChannel, changeViewType, isInCall, joinCall }) {
     const [textChannels, setTextChannels] = useState([]);
@@ -17,7 +17,7 @@ export default function ChannelList({ server, selectTextChannel, changeViewType,
     const [textChannelsOpen, setTextChannelsOpen] = useState(true);
     const [voiceChannelsOpen, setVoiceChannelsOpen] = useState(true);
     const [activeChannel, setActiveChannel] = useState(null);
-    const user = getAuth().currentUser;
+    const user = auth.currentUser;
 
 
     const isAdminOrOwner = (userId) => {
@@ -41,9 +41,8 @@ export default function ChannelList({ server, selectTextChannel, changeViewType,
 
     useEffect(() => {
         const fetchChannels = () => {
-            const firestore = getFirestore();
-            const textChannelsCollection = collection(firestore, `servers/${server.id}/textchannels`);
-            const voiceChannelsCollection = collection(firestore, `servers/${server.id}/voicechannels`);
+            const textChannelsCollection = collection(db, `servers/${server.id}/textchannels`);
+            const voiceChannelsCollection = collection(db, `servers/${server.id}/voicechannels`);
 
             const unsubscribeTextChannels = onSnapshot(textChannelsCollection, (snapshot) => {
                 const textChannelsList = snapshot.docs.map(doc => ({

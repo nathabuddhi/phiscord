@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { doc, getFirestore, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/components/firebase';
 
 export default function CallBox({ localUser, serverId, channelId, localVideoTrack, localVideoOn, remoteTracks }) {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-        const firestore = getFirestore();
-        const channelDocRef = doc(firestore, `servers/${serverId}/voicechannels`, channelId);
+        const channelDocRef = doc(db, `servers/${serverId}/voicechannels`, channelId);
 
         const unsubscribeChannel = onSnapshot(channelDocRef, async (snapshot) => {
             if (snapshot.exists()) {
@@ -17,7 +17,7 @@ export default function CallBox({ localUser, serverId, channelId, localVideoTrac
                 const userUnsubscribes = [];
 
                 const userPromises = userIds.map((userId) => {
-                    const userDocRef = doc(firestore, 'users', userId);
+                    const userDocRef = doc(db, 'users', userId);
 
                     return new Promise((resolve) => {
                         const unsubscribeUser = onSnapshot(userDocRef, (userSnapshot) => {
