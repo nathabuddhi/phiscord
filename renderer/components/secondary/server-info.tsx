@@ -97,12 +97,12 @@ export default function ServerInfo({ server, changeViewType }) {
                             <Button variant="ghost" className="my-1" onClick={() => {navigator.clipboard.writeText("Come join my PHiscord server called '" + server.name + "'! Here's the server ID to my server: " + server.id)}}>Invite People</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Server ID Copied!</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Go ahead and send this ID to your friends so they can join your server!.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Server ID Copied!</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Go ahead and send this ID to your friends so they can join your server!
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Close</AlertDialogCancel>
                             </AlertDialogFooter>
