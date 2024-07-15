@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import Picker from '@emoji-mart/react';
 import { useTheme } from "next-themes";
 import Filter from 'bad-words';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const { toast } = useToast();
@@ -26,6 +28,10 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
     const [loading, setLoading] = useState(true);
+    const [isDragging, setIsDragging] = useState(false);
+    const storage = getStorage();
+    const [file, setFile] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const filter = new Filter();
 
@@ -198,15 +204,142 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         setMessageInput(input => input + emote.native);
     };
 
+    const onDragOver = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const onDragEnter = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const onDragLeave = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const onDrop = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(event.dataTransfer.files);
+        if (files.length > 0) {
+            setFile(files[0]);
+            setDialogOpen(true);
+        }
+    };
+
+    const uploadFile = async () => {
+        if (!file) {
+            toast({
+                variant: "destructive",
+                title: "No file selected",
+                description: "Please select a file to upload.",
+            });
+            return;
+        }
+
+        if(toChatUser.blocked.includes(currUser.id)) {
+            toast({
+                variant: "destructive",
+                title: "Blocked.",
+                description: "You cannot send messages to this user because you have been blocked."
+            });
+            return;
+        } else if(currUser.blocked.includes(toChatUser.id)) {
+            toast({
+                variant: "destructive",
+                title: "Blocked",
+                description: "You cannot send messages to users you have blocked."
+            });
+            return;
+        } else if(!toChatUser.friends.includes(currUser.id) && !toChatUser.randomMessage) {
+            toast({
+                variant: "destructive",
+                title: "Not friends",
+                description: "You cannot send messages to this user because you are not friends and this user is not accepting messages from non-friends."
+            });
+            return;
+        }  else if(!toChatUser.messages.includes(currUser.id)) {
+            const receiverDocRef = doc(firestore, "users", toChatUser.id);
+
+            await updateDoc(receiverDocRef, {
+                messages: arrayUnion(currUser.id)
+            });
+        }
+
+        toast({
+            title: "Uploading file.",
+            description: "Please wait while we upload your file.",
+        })
+
+        const fileType = file.type.startsWith("image/") ? "image" : "file";
+        const storageRef = ref(storage, `uploads/${directMessageId}/${file.name}`);
+        try {
+            const addNotificationDocRef = collection(firestore, `users/${toChatUser.id}/toastNotifications`);
+            await addDoc(addNotificationDocRef, {
+                title: "New Message",
+                description: `${currUser.username} sent you a file`,
+                senderId: currUser.id,
+                duration: 3000,
+            });
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
+            let fileSize;
+            if (file.size >= 1024 * 1024 * 1024) {
+                fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+            } else if (file.size >= 1024 * 1024) {
+                fileSize = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+            } else {
+                fileSize = (file.size / 1024).toFixed(2) + " KB";
+            }
+
+            await addDoc(messagesRef, {
+                content: downloadURL,
+                timestamp: serverTimestamp(),
+                userId: currUser.id,
+                type: fileType,
+                fileName: file.name,
+                fileSize: fileSize
+            });
+            setFile(null);
+            setDialogOpen(false);
+
+            const notifQuery = collection(firestore, `users/${toChatId}/notifications`);
+            await addDoc(notifQuery, {
+                content: "Sent you a file.",
+                from: currUser.id,
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Uh oh. Something went wrong.",
+                description: "Failed to upload file: " + error.message,
+            });
+        }
+    };
+
     const searchedMessages = messages.filter(message => 
         message.content.toLowerCase().includes(searchMessage.toLowerCase())
     );
 
     if(loading)
-        return null
+        return null;
 
     return (
-        <div className="w-[calc(100vw-280px)] flex flex-col bg-background border-r-4 border-darkerbackground h-[calc(100vh-40px)]">
+        <div
+            className={`w-[calc(100vw-280px)] flex flex-col bg-background h-[calc(100vh-40px)] transition-all ${isDragging ? "border-dashed border border-black" : "border-solid border-darkerbackground"}`}
+            onDragOver={onDragOver}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+        >
             <Head>
                 <title>{toChatUser ? toChatUser.username : "Direct Message"} - PHiscord</title>
             </Head>
@@ -265,6 +398,22 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                     </PopoverContent>
                 </Popover>
             </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure you want to upload this file?</DialogTitle>
+                    </DialogHeader>
+                    <p>{file && file.name}</p>
+                    <DialogFooter>
+                        <Button onClick={uploadFile}>
+                            Upload
+                        </Button>
+                        <DialogClose>
+                            <Button variant="destructive" onClick={() => setFile(null)}>Cancel</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

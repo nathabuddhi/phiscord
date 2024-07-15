@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import Picker from '@emoji-mart/react';
 import { useTheme } from "next-themes";
 import Filter from 'bad-words';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function ChatBox({ channel, server }) {
     const { toast } = useToast();
@@ -22,13 +24,17 @@ export default function ChatBox({ channel, server }) {
     const user = auth.currentUser;
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
+    const [isDragging, setIsDragging] = useState(false);
+    const storage = getStorage();
+    const [file, setFile] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const filter = new Filter();
 
-    const chatBoxBottom = useRef(null)
+    const chatBoxBottom = useRef(null);
 
     useEffect(() => {
-        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" })
+        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     useEffect(() => {
@@ -56,14 +62,14 @@ export default function ChatBox({ channel, server }) {
     const sendMessage = async (content) => {
         if (!content.trim()) return;
 
-        if(filter.isProfane(content)) {
+        if (filter.isProfane(content)) {
             toast({
                 variant: "destructive",
                 title: "Profanity detected.",
                 description: "Please refrain from using profanity in your messages. We want to keep PHiscord a safe and friendly place for everyone."
-            })
+            });
             return;
-        } 
+        }
 
         try {
             const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
@@ -87,12 +93,97 @@ export default function ChatBox({ channel, server }) {
         setMessageInput(input => input + emote.native);
     };
 
+    const onDragOver = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const onDragEnter = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const onDragLeave = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const onDrop = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(event.dataTransfer.files);
+        if (files.length > 0) {
+            setFile(files[0]);
+            setDialogOpen(true);
+        }
+    };
+
+    const uploadFile = async () => {
+        if (!file) {
+            toast({
+                variant: "destructive",
+                title: "No file selected",
+                description: "Please select a file to upload.",
+            });
+            return;
+        }
+
+        toast({
+            title: "Uploading file.",
+            description: "Please wait while we upload your file.",
+        });
+
+        const fileType = file.type.startsWith("image/") ? "image" : "file";
+        const storageRef = ref(storage, `uploads/${server.id}/${channel.id}/${file.name}`);
+        try {
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
+            let fileSize;
+            if (file.size >= 1024 * 1024 * 1024) {
+                fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+            } else if (file.size >= 1024 * 1024) {
+                fileSize = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+            } else {
+                fileSize = (file.size / 1024).toFixed(2) + " KB";
+            }
+
+            await addDoc(messagesRef, {
+                content: downloadURL,
+                timestamp: serverTimestamp(),
+                userId: user.uid,
+                type: fileType,
+                fileName: file.name,
+                fileSize: fileSize
+            });
+            setFile(null);
+            setDialogOpen(false);
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Uh oh. Something went wrong.",
+                description: "Failed to upload file: " + error.message,
+            });
+        }
+    };
+
     const searchedMessages = messages.filter(message => 
         message.content.toLowerCase().includes(searchMessage.toLowerCase())
     );
 
     return (
-        <div className="w-[calc(100vw-520px)] flex flex-col bg-background border-r-4 border-darkerbackground h-[calc(100vh-40px)]">
+        <div
+            className={`w-[calc(100vw-280px)] flex flex-col bg-background h-[calc(100vh-40px)] transition-all ${isDragging ? "border-dashed border border-black" : "border-solid border-darkerbackground"}`}
+            onDragOver={onDragOver}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+        >
             <div className="border-b-[1.5px] h-[50px] w-full border-darkerbackground rounded-b-[5px] flex flex-row items-center justify-between px-4">
                 <div className="flex flex-row">
                     <Hash size={30} />
@@ -137,14 +228,30 @@ export default function ChatBox({ channel, server }) {
                 <Popover>
                     <PopoverTrigger>
                         <Button variant="ghost" size="icon" className="ml-2">
-                            <SmilePlus size={24}  />
+                            <SmilePlus size={24} />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto">
-                        <Picker onEmojiSelect={addEmoji} theme={theme}/>
+                        <Picker onEmojiSelect={addEmoji} theme={theme} />
                     </PopoverContent>
                 </Popover>
             </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure you want to upload this file?</DialogTitle>
+                    </DialogHeader>
+                    <p>{file && file.name}</p>
+                    <DialogFooter>
+                        <Button onClick={uploadFile}>
+                            Upload
+                        </Button>
+                        <DialogClose>
+                            <Button variant="destructive" onClick={() => setFile(null)}>Cancel</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
