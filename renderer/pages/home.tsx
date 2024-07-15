@@ -22,7 +22,7 @@ const HomePage = ({ userDetails }) => {
     const [isViewingChat, setIsViewingChat] = useState(false);
     const [server, setServer] = useState(null);
     const [channel, setChannel] = useState(null);
-    const [chatId, setChatId] = useState();
+    const [chatId, setChatId] = useState('test');
     const [isInCall, setIsInCall] = useState(false);
     const [isViewingCall, setIsViewingCall] = useState(false);
     const [isVideoOn, setIsVideoOn] = useState(false);
@@ -47,11 +47,15 @@ const HomePage = ({ userDetails }) => {
     };
 
     const selectServer = (selectedServer) => {
+        setChatId('')
+        chatIdRef.current = '';
         setServer(selectedServer);
         serverView();
     };
 
     const friendListView = () => {
+        setChatId('')
+        chatIdRef.current = '';
         setIsViewingServer(false);
         setIsViewingChat(false);
     };
@@ -77,6 +81,7 @@ const HomePage = ({ userDetails }) => {
 
         setChatId(userToChatId);
         chatIdRef.current = userToChatId;
+        console.error(chatIdRef.current);
 
         friendChatView();
     };
@@ -352,6 +357,10 @@ const HomePage = ({ userDetails }) => {
         setRemoteTracks([]);
     };
 
+    function checkNotifInChat(senderId) {
+        return senderId === chatIdRef.current;
+    }
+
     const toastNotificationListener = () => {
         const notificationsCollectionRef = collection(db, `users/${userDetails.id}/toastNotifications`);
     
@@ -359,14 +368,18 @@ const HomePage = ({ userDetails }) => {
             snapshot.docChanges().forEach(async (change) => {
                 if (change.type === "added") {
                     const data = change.doc.data();
-                    setTimeout(data.duration+500);
-                    toast({
-                        duration: data.duration,
-                        title: data.title,
-                        description: data.description,
-                        action: <ToastAction altText='Login' onClick={() => changeUserToChat(data.senderId)}>Jump</ToastAction>
-                    })
-                    await deleteDoc(change.doc.ref);
+                    if(checkNotifInChat(data.senderId)) {
+                        await deleteDoc(change.doc.ref);
+                    } else {
+                        setTimeout(data.duration+500);
+                        toast({
+                            duration: data.duration,
+                            title: data.title,
+                            description: data.description,
+                            action: <ToastAction altText='Login' onClick={() => changeUserToChat(data.senderId)}>Jump</ToastAction>
+                        })
+                        await deleteDoc(change.doc.ref);
+                    }
                     window.ipc.send('notification-received', {});
                 }
             });
