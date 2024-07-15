@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { getAuth } from "firebase/auth";
 
-export default function FriendInfo({ friendId, changeUserToChat }) {
+export default function FriendInfo({ friendId, changeUserToChat, online }) {
     const { toast } = useToast();
     const [friend, setFriend] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,7 +68,11 @@ export default function FriendInfo({ friendId, changeUserToChat }) {
     }
 
     if (!friend && !loading) {
-        return null
+        return null;
+    }
+
+    if(online && !friend.isOnline) {
+        return null;
     }
     
     return (

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, getFirestore, query, setDoc, where } from "firebase/firestore";
 import { auth, db } from "@/components/firebase";
 import Link from "next/link";
 
@@ -19,9 +19,15 @@ const generalFormSchema = z.object({
 
 export default function GeneralSettings({ userDetails }) {
     const { toast } = useToast();
+    const firestore = getFirestore();
 
     async function logout() {
         try {
+            const userDocRef = doc(firestore, "users", userDetails.id);
+            await setDoc(userDocRef, {
+                isOnline: false
+            }, { merge: true });
+
             sessionStorage.setItem('logout', 'true');
             await auth.signOut();
             window.location.href = "/login";

@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize, Minimize, X } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
+import { doc, getFirestore, setDoc } from 'firebase/firestore';
 
 export default function TitleBar() {
+    const auth = getAuth();
+    const firestore = getFirestore();
+
     const [isMaximized, setIsMaximized] = useState(false);
 
     const toggleMaximize = () => {
@@ -18,7 +23,14 @@ export default function TitleBar() {
         window.ipc.send('minimize-window', null);
     }
 
-    const closeWindow = () => {
+    const closeWindow = async () => {
+        const tempUser = auth.currentUser;
+        if(tempUser) {
+            const userDocRef = doc(firestore, "users", tempUser.uid);
+            await setDoc(userDocRef, {
+                isOnline: false
+            }, { merge: true });
+        }
         window.ipc.send('close-window', null);
     }
 

@@ -12,7 +12,7 @@ import FriendChatBox from '@/components/friend-chat-box';
 import CallInfo from '@/components/call-info';
 import CallBox from '@/components/call-box';
 import { getAuth } from 'firebase/auth';
-import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, collection, deleteDoc, onSnapshot, addDoc } from 'firebase/firestore';
+import { getDoc, doc, getFirestore, updateDoc, arrayUnion, arrayRemove, collection, deleteDoc, onSnapshot, addDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/components/ui/use-toast';
 import FriendCallBox from '@/components/friend-call-box';
 import { ToastAction } from "@/components/ui/toast";
@@ -372,7 +372,17 @@ const HomePage = ({ userDetails }) => {
         });
     };
 
+    const setUserOnline = async () => {
+        const userDocRef = doc(firestore, "users", userDetails.id);
+        if(!userDetails.isOnline) {
+            await setDoc(userDocRef, {
+                isOnline: true
+            }, { merge: true });
+        }
+    }
+
     useEffect(() => {
+        setUserOnline();
         toastNotificationListener();
     }, []);
 

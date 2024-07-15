@@ -11,7 +11,6 @@ import BlockInfo from "@/components/secondary/block-info";
 export default function FriendBox({ changeUserToChat }) {
     const { toast } = useToast();
 
-    const [onlineFriends, setOnlineFriends] = useState([]);
     const [friends, setFriends] = useState([]);
     const [blocked, setBlocked] = useState([]);
 
@@ -61,10 +60,9 @@ export default function FriendBox({ changeUserToChat }) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {onlineFriends.length > 0 && onlineFriends.map(friend => (
-                                <FriendInfo friendId={friend} changeUserToChat={changeUserToChat} />
+                            {friends.length > 0 && friends.map(friend => (
+                                <FriendInfo friendId={friend} changeUserToChat={changeUserToChat} online={true} />
                             ))}
-                            {onlineFriends.length === 0 && <p className="text-center text-gray-500">This feature is upcoming. You can currently only view all your friends in the "All" tab. Stay tuned for updates from LC118!</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -78,9 +76,9 @@ export default function FriendBox({ changeUserToChat }) {
                         </CardHeader>
                         <CardContent>
                             {friends.length > 0 && friends.map(friend => (
-                                <FriendInfo friendId={friend} changeUserToChat={changeUserToChat} />
+                                <FriendInfo friendId={friend} changeUserToChat={changeUserToChat} online={false} />
                             ))}
-                            {friends.length === 0 && <p className="text-center text-gray-500">You have no friends yet :(</p>}
+                            {friends.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400">You have no friends yet :(</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
