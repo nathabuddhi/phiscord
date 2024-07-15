@@ -73,6 +73,13 @@ export default function Message({ message, server, channel }) {
         return (message.content.includes(`@${user.username}`) || message.content.includes(`@${user.displayname}`) || message.content.includes(`@everyone`));
     }
 
+    const renderTimestamp = () => {
+        if (message.timestamp?.toDate) {
+            return new Date(message.timestamp.toDate()).toLocaleString();
+        }
+        return new Date().toLocaleString();
+    };
+
     if (loading) {
         return (
             <div className="flex flex-row m-2 hover:bg-darkerbackground p-1 rounded-[10px]">
@@ -98,7 +105,7 @@ export default function Message({ message, server, channel }) {
                         <p className="text-base mr-2 italic">
                             Blocked User 
                         </p>
-                        <p className="text-xs text-gray-400">{new Date(message.timestamp?.toDate()).toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">{renderTimestamp()}</p>
                     </div>
                     <p className="italic">Content from blocked users will not be shown.</p>
                 </div>
@@ -120,7 +127,7 @@ export default function Message({ message, server, channel }) {
                             <p className={"text-base mr-2"}>
                                 {nickname === '' ? author.displayname : nickname}
                             </p>
-                            <p className="text-xs text-gray-400">{new Date(message.timestamp?.toDate()).toLocaleString()}</p>
+                            <p className="text-xs text-gray-400">{renderTimestamp()}</p>
                         </div>
                         {message.type === "image" ? (
                             <div className={`text-${user.font ? user.font : "base"}`}>

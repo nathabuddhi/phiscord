@@ -24,7 +24,7 @@ export default function Loading() {
             <Head>
                 <title>Loading - PHiscord</title>
             </Head>
-            <div className="flex flex-col justify-center items-center h-screen bg-[#5165f6]">
+            <div className="flex flex-col justify-center items-center h-[calc(100vh-40px)] bg-[#5165f6]">
                 <div className="w-1/2 max-w-sm p-8 rounded-lg border-0">
                     <img src="/gifs/loading_logo.gif" alt="Loading" className="w-full h-auto border-0" />
                     <p className="text-2xl text-white text-center mt-4"></p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import ServerList from '@/components/server-list';
 import ChannelList from '@/components/channel-list';
@@ -38,6 +38,7 @@ const HomePage = ({ userDetails }) => {
     const [directCall, setDirectCall] = useState('');
 
     const clientRef = useRef(null);
+    const chatIdRef = useRef(null);
 
     const APP_ID = "0403f6945a0d406c9efa7cb00f5c7aca";
 
@@ -75,6 +76,8 @@ const HomePage = ({ userDetails }) => {
         }
 
         setChatId(userToChatId);
+        chatIdRef.current = userToChatId;
+
         friendChatView();
     };
 

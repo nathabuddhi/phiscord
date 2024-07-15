@@ -5,7 +5,6 @@ import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, s
 import DirectMessage from "@/components/secondary/messaging/dm-message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getAuth } from "firebase/auth";
 import UploadDMFile from "@/components/secondary/messaging/upload-dm-file";
 import Head from "next/head";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -73,7 +72,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     };
 
     useEffect(() => {
-        const tempUser = getAuth().currentUser;
+        const tempUser = auth.currentUser;
 
         if (!toChatId) {
             changeViewType(2);
@@ -123,18 +122,19 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     useEffect(() => {
         if (currUser && toChatUser) {
             const initializeDM = async () => {
-                if (!currUser || !toChatUser) return;
+                if (!currUser || !toChatUser)
+                    return;
                 const dmQuery = query(collection(db, "directmessages"), where("participants", "array-contains", currUser.id));
                 const dmSnapshot = await getDocs(dmQuery);
                 let dmDoc = dmSnapshot.docs.find(doc => doc.data().participants.includes(toChatId));
 
                 if (!dmDoc) {
-                    const newDMRef = await addDoc(collection(db, "directmessages"), {
+                    const newDMDocRef = await addDoc(collection(db, "directmessages"), {
                         participants: [currUser.id, toChatId],
                     });
-                    await setDoc(newDMRef, { id: newDMRef.id }, { merge: true });
-                    setDirectMessageId(newDMRef.id);
-                    dmDoc = await getDoc(newDMRef);
+                    await setDoc(newDMDocRef, { id: newDMDocRef.id }, { merge: true });
+                    setDirectMessageId(newDMDocRef.id);
+                    dmDoc = await getDoc(newDMDocRef);
                 } else {
                     setDirectMessageId(dmDoc.id);
                 }
@@ -146,10 +146,31 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
 
                 setLoading(false);
             };
-
             initializeDM();
         }
+
+        
     }, [currUser, toChatUser]);
+
+    useEffect(() => {
+        const messagesCollectionRef = collection(db, `directmessages/${directMessageId}/messages`);
+        const messagesQuery = query(messagesCollectionRef, orderBy("timestamp", "asc"));
+
+        const newMessageListener = onSnapshot(messagesQuery, (snapshot) => {
+            let newMessage;
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    newMessage = change.doc.data()
+                }
+            });
+            if (newMessage != null) {
+                setMessages(prevMessages => [...prevMessages, newMessage]);
+                chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" });
+            }
+        });
+
+        return () => newMessageListener();
+    }, [directMessageId])
 
     const sendMessage = async (content) => {
         if (!content.trim()) return;
@@ -310,7 +331,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
             });
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
-            const messagesRef = collection(db, `directmessages/${directMessageId}/messages`);
+            const messagesCollectionRef = collection(db, `directmessages/${directMessageId}/messages`);
             let fileSize;
             if (file.size >= 1024 * 1024 * 1024) {
                 fileSize = (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
@@ -320,7 +341,7 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 fileSize = (file.size / 1024).toFixed(2) + " KB";
             }
 
-            await addDoc(messagesRef, {
+            await addDoc(messagesCollectionRef, {
                 content: downloadURL,
                 timestamp: serverTimestamp(),
                 userId: currUser.id,

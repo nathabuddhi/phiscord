@@ -1,7 +1,7 @@
 import { Hash, SmilePlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, limit, startAfter } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, limit, startAfter, onSnapshot } from "firebase/firestore";
 import Message from "@/components/secondary/messaging/message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -42,10 +42,10 @@ export default function ChatBox({ channel, server }) {
     }, [messages]);
 
     const fetchMessages = async (channelId, serverId, lastVisibleMessage) => {
-        const messagesRef = collection(db, `servers/${serverId}/textchannels/${channelId}/messages`);
-        let messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(20));
+        const messagesCollectionRef = collection(db, `servers/${serverId}/textchannels/${channelId}/messages`);
+        let messagesQuery = query(messagesCollectionRef, orderBy("timestamp", "desc"), limit(20));
         if (lastVisibleMessage) {
-            messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
+            messagesQuery = query(messagesCollectionRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
         }
         const snapshot = await getDocs(messagesQuery);
         const messagesList = snapshot.docs.map(doc => ({
@@ -69,6 +69,24 @@ export default function ChatBox({ channel, server }) {
         };
 
         fetchInitialMessages();
+
+        const messagesCollectionRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
+        const messagesQuery = query(messagesCollectionRef, orderBy("timestamp", "asc"));
+
+        const newMessageListener = onSnapshot(messagesQuery, (snapshot) => {
+            let newMessage;
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    newMessage = change.doc.data()
+                }
+            });
+            if (newMessage != null) {
+                setMessages(prevMessages => [...prevMessages, newMessage]);
+                chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" });
+            }
+        });
+
+        return () => newMessageListener();
     }, [channel, server]);
 
     const loadMoreMessages = async () => {
@@ -94,8 +112,8 @@ export default function ChatBox({ channel, server }) {
         }
 
         try {
-            const messagesRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
-            await addDoc(messagesRef, {
+            const messagesCollectionRef = collection(db, `servers/${server.id}/textchannels/${channel.id}/messages`);
+            await addDoc(messagesCollectionRef, {
                 content: content,
                 timestamp: serverTimestamp(),
                 userId: user.uid,
