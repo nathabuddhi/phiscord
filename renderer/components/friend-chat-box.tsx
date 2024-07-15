@@ -1,7 +1,7 @@
 import { Hash, SmilePlus, Search, PhoneCall } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, use, useRef } from 'react';
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc } from "firebase/firestore";
+import { useState, useEffect, useRef } from 'react';
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc, getDocs, where, getDoc, arrayUnion, updateDoc, limit, startAfter } from "firebase/firestore";
 import DirectMessage from "@/components/secondary/messaging/dm-message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,7 +24,6 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const [currUser, setCurrUser] = useState(null);
     const [toChatUser, setToChatUser] = useState(null);
     const [directMessageId, setDirectMessageId] = useState(null);
-    const [unsubscribeMessages, setUnsubscribeMessages] = useState(null);
     const { theme } = useTheme();
     const [searchMessage, setSearchMessage] = useState("");
     const [loading, setLoading] = useState(true);
@@ -32,14 +31,46 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
     const storage = getStorage();
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
+    const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
+    const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
     const filter = new Filter();
 
     const chatBoxBottom = useRef(null)
 
     useEffect(() => {
-        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" })
+        if(isLoadingMessage) {
+            setIsLoadingMessage(false);
+            return;
+        }
+        chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    const fetchMessages = async (directMessageId, lastVisibleMessage) => {
+        const messagesRef = collection(firestore, `directmessages/${directMessageId}/messages`);
+        let messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(20));
+        if(lastVisibleMessage) {
+            messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
+        }
+        const snapshot = await getDocs(messagesQuery);
+        const messagesList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        return { messagesList, lastVisible, reachedEnd: snapshot.docs.length < 20 };
+    }
+
+    const loadMoreMessages = async () => {
+        if (lastVisibleMessage) {
+            const { messagesList, lastVisible, reachedEnd } = await fetchMessages(directMessageId, lastVisibleMessage);
+            setMessages(prevMessages => [...messagesList.reverse(), ...prevMessages]);
+            setLastVisibleMessage(lastVisible);
+            setAllMessagesLoaded(reachedEnd);
+            setIsLoadingMessage(true);
+        }
+    };
 
     useEffect(() => {
         const tempUser = getAuth().currentUser;
@@ -86,15 +117,12 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
         return () => {
             unsubscribeUser();
             unsubscribeToChat();
-            if (unsubscribeMessages) {
-                unsubscribeMessages();
-            }
         };
     }, [toChatId]);
 
     useEffect(() => {
         if (currUser && toChatUser) {
-            const checkAndCreateDM = async () => {
+            const initializeDM = async () => {
                 if (!currUser || !toChatUser) return;
                 const dmQuery = query(collection(firestore, "directmessages"), where("participants", "array-contains", currUser.id));
                 const dmSnapshot = await getDocs(dmQuery);
@@ -111,23 +139,15 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                     setDirectMessageId(dmDoc.id);
                 }
 
-                if (unsubscribeMessages) {
-                    unsubscribeMessages();
-                }
+                const { messagesList, lastVisible, reachedEnd } = await fetchMessages(dmDoc.id, null);
+                setMessages(messagesList.reverse());
+                setLastVisibleMessage(lastVisible);
+                setAllMessagesLoaded(reachedEnd);
 
-                const unsubscribe = onSnapshot(query(collection(firestore, `directmessages/${dmDoc.id}/messages`), orderBy("timestamp", "asc")), (snapshot) => {
-                    const messagesList = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
-                    setMessages(messagesList);
-                });
-
-                setUnsubscribeMessages(() => unsubscribe);
                 setLoading(false);
             };
 
-            checkAndCreateDM();
+            initializeDM();
         }
     }, [currUser, toChatUser]);
 
@@ -362,6 +382,14 @@ export default function FriendChatBox({ toChatId, changeViewType, joinCall }) {
                 </div>
             </div>
             <ScrollArea className={`h-[calc(100vh-125px)] ${messages.length <= 0 ? "flex w-full" : ""}`}>
+                {!allMessagesLoaded && messages.length > 0 &&(
+                    <div className="flex justify-center my-4">
+                        <Button onClick={loadMoreMessages}>Load More Messages</Button>
+                    </div>
+                )}
+                {allMessagesLoaded && messages.length > 0 &&(
+                    <p className="text-center my-4 text-gray-500">You have reached the start of the chat.</p>
+                )}
                 {searchedMessages.length > 0 && searchedMessages.map(message => (
                     <DirectMessage message={message} dmID={directMessageId} key={message.id} />
                 ))}

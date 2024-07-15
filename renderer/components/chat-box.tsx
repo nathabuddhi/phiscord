@@ -1,7 +1,7 @@
 import { Hash, SmilePlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, getDocs, limit, startAfter } from "firebase/firestore";
 import Message from "@/components/secondary/messaging/message";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,36 +28,65 @@ export default function ChatBox({ channel, server }) {
     const storage = getStorage();
     const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
+    const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
+    const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
     const filter = new Filter();
 
     const chatBoxBottom = useRef(null);
 
     useEffect(() => {
+        if(isLoadingMessage) {
+            setIsLoadingMessage(false);
+            return;
+        }
         chatBoxBottom.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    useEffect(() => {
-        if (!server || !channel) return;
-        const messagesRef = collection(firestore, `servers/${server.id}/textchannels/${channel.id}/messages`);
-        const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+    const fetchMessages = async (channelId, serverId, lastVisibleMessage) => {
+        const messagesRef = collection(firestore, `servers/${serverId}/textchannels/${channelId}/messages`);
+        let messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(20));
+        if (lastVisibleMessage) {
+            messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), startAfter(lastVisibleMessage), limit(20));
+        }
+        const snapshot = await getDocs(messagesQuery);
+        const messagesList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        return { messagesList, lastVisible, reachedEnd: snapshot.docs.length < 20 };
+    };
 
-        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-            const messagesList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setMessages(messagesList);
-        }, (error) => {
+    useEffect(() => {
+        if (!server || !channel) {
             toast({
                 variant: "destructive",
                 title: "Uh oh. Something went wrong.",
-                description: "We couldn't fetch messages for this channel. Please try again. Error: " + error.message
-            });
-        });
+                description: "Failed to load messages. Please try again later."
+            })
+        }
 
-        return () => unsubscribe();
+        const fetchInitialMessages = async () => {
+            const { messagesList, lastVisible, reachedEnd } = await fetchMessages(channel.id, server.id, null);
+            setMessages(messagesList.reverse());
+            setLastVisibleMessage(lastVisible);
+            setAllMessagesLoaded(reachedEnd);
+        };
+
+        fetchInitialMessages();
     }, [channel, server]);
+
+    const loadMoreMessages = async () => {
+        if (lastVisibleMessage) {
+            const { messagesList, lastVisible, reachedEnd } = await fetchMessages(channel.id, server.id, lastVisibleMessage);
+            setMessages(prevMessages => [...messagesList.reverse(), ...prevMessages]);
+            setLastVisibleMessage(lastVisible);
+            setAllMessagesLoaded(reachedEnd);
+            setIsLoadingMessage(true);
+        }
+    };
 
     const sendMessage = async (content) => {
         if (!content.trim()) return;
@@ -178,7 +207,7 @@ export default function ChatBox({ channel, server }) {
 
     return (
         <div
-            className={`w-[calc(100vw-280px)] flex flex-col bg-background h-[calc(100vh-40px)] transition-all ${isDragging ? "border-dashed border border-black" : "border-solid border-darkerbackground"}`}
+            className={`w-[calc(100vw-280px)] flex flex-col bg-background h-[calc(100vh-40px)] transition-all ${isDragging ? "border-dashed border border-black dark:border-gray-400" : "border-r-4 border-solid border-darkerbackground"}`}
             onDragOver={onDragOver}
             onDragEnter={onDragEnter}
             onDragLeave={onDragLeave}
@@ -199,7 +228,15 @@ export default function ChatBox({ channel, server }) {
                     />
                 </div>
             </div>
-            <ScrollArea className={`h-[calc(100vh-125px)] ${messages.length <= 0 ? "flex w-full" : ""}`}>
+            <ScrollArea className={`scroll-area h-[calc(100vh-125px)] ${messages.length <= 0 ? "flex w-full" : ""}`}>
+                {!allMessagesLoaded && messages.length > 0 &&(
+                    <div className="flex justify-center my-4">
+                        <Button onClick={loadMoreMessages}>Load More Messages</Button>
+                    </div>
+                )}
+                {allMessagesLoaded && messages.length > 0 &&(
+                    <p className="text-center my-4 text-gray-500">You have reached the start of the chat.</p>
+                )}
                 {searchedMessages.length > 0 && searchedMessages.map(message => (
                     <Message message={message} server={server} channel={channel} key={message.id} />
                 ))}

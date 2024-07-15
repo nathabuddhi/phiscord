@@ -132,9 +132,9 @@ export default function Message({ message, server, channel }) {
                                 </div>
                                 <div className='mt-2'>
                                     <Button className="w-auto">
-                                        <Link href={message.content} rel="noopener noreferrer">
+                                        <a href={message.content} rel="noopener noreferrer" target="_blank">
                                             View Original ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
-                                        </Link>
+                                        </a>
                                     </Button>
                                 </div>
                             </div>

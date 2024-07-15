@@ -109,9 +109,9 @@ export default function DirectMessage({ message, dmID }) {
                                 </div>
                                 <div className="mt-2">
                                     <Button className="w-auto">
-                                        <Link href={message.content} rel="noopener noreferrer">
-                                            Download Image ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
-                                        </Link>
+                                        <a href={message.content} rel="noopener noreferrer" target="_blank">
+                                            View Original ({message.fileName ? message.fileName : "Unknown File Name"} - {message.fileSize ? message.fileSize : "Unknown File Size"})
+                                        </a>
                                     </Button>
                                 </div>
                             </div>
