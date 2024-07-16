@@ -8,7 +8,6 @@ import DeleteMessage from "@/components/secondary/messaging/delete-message";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Linkify from 'react-linkify';
-import LinkStyles from "@/styles/message.module.scss";
 import { auth, db } from "@/components/firebase";
 
 export default function Message({ message, server, channel }) {
@@ -154,12 +153,12 @@ export default function Message({ message, server, channel }) {
                             </div>
                         ) : (
                             <Linkify componentDecorator={(decoratedHref, decoratedText, key) => (
-                                <a href={decoratedHref} key={key} className={LinkStyles.messageLink} target="_blank" rel="noopener noreferrer">
+                                <a href={decoratedHref} key={key} className="message-link" target="_blank" rel="noopener noreferrer">
                                     {decoratedText}
                                 </a>
                                 )}>
                                 <div className={`text-${user.font ? user.font : "base"}`}>
-                                    <p className={LinkStyles.messageLink}>{message.content}</p>
+                                    <p className="message-link">{message.content}</p>
                                 </div>
                             </Linkify>
                         ))}

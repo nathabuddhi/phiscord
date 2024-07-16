@@ -15,8 +15,8 @@ if (isProd) {
   await app.whenReady();
 
   const mainWindow = createWindow('main', {
-    width: 1400,
-    height: 900,
+    width: 2160,
+    height: 1440,
     icon: path.join(__dirname, 'assets/app-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

@@ -78,5 +78,18 @@
 }
   
 .title-bar-controls {
-    -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.message-link {
+  color: hsl(var(--foreground));
+}
+
+.message-link a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+}
+
+.message-link a:hover {
+  text-decoration: underline;
 }
